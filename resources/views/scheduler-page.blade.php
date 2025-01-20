@@ -326,13 +326,36 @@
             </form>
         </div>
 
-        @if(isset($schedule))
+            @if(isset($schedule))
             <div class="schedule-params">
                 <div class="params-title">Current Schedule Parameters:</div>
                 <div>Weeks: {{ $params['weeks'] }}</div>
                 <div>Game Length: {{ $params['gameLength'] }} minutes</div>
-                <div>Day Start: {{ $params['dayStart'] }}</div>
-                <div>Day End: {{ $params['dayEnd'] }}</div>
+                
+                {{-- Days and Times Section --}}
+                <div class="days-times-section" style="margin-top: 15px;">
+                    <div class="params-subtitle" style="font-weight: 500; margin-bottom: 10px;">Available Days and Times:</div>
+                    @php
+                        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                        $enabledDays = [];
+                    @endphp
+                    
+                    @foreach($days as $day)
+                        @if(isset($params[$day.'_enabled']) && $params[$day.'_enabled'])
+                            <div class="day-time-entry" style="margin-bottom: 8px;">
+                                <span style="text-transform: capitalize; font-weight: 500;">{{ $day }}:</span>
+                                <span>{{ $params[$day.'_start'] }} to {{ $params[$day.'_end'] }}</span>
+                            </div>
+                            @php
+                                $enabledDays[] = ucfirst($day);
+                            @endphp
+                        @endif
+                    @endforeach
+                    
+                    @if(empty($enabledDays))
+                        <div style="color: #666;">No days selected</div>
+                    @endif
+                </div>
                 
                 <div class="stats-container">
                     <div class="params-title" style="margin-top: 20px;">Games Per Team:</div>
