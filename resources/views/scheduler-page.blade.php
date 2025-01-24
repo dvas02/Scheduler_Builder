@@ -217,6 +217,40 @@
         .time-inputs span {
             color: #666;
         }
+        .day-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .day-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .day-title {
+            color: #2c3e50;
+            font-size: 1.1em;
+            font-weight: 500;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .edit-btn {
+            padding: 6px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .edit-btn:hover {
+            background-color: #2980b9;
+        }
 
         @keyframes slideIn {
             from {
@@ -256,24 +290,13 @@
                     @enderror
                 </div>
 
-                {{-- Replace the current day start/end with day of the week picker and time for each day --}}
-                
                 <div class="form-group">
-                    <label for="dayStart">Day Start Time:</label>
-                    <input type="time" id="dayStart" name="dayStart" value="{{ old('dayStart', $params['dayStart'] ?? '09:00') }}" required>
-                    @error('dayStart')
+                    <label for="targetGames">Target Number of Games Per Team:</label>
+                    <input type="number" id="targetGames" name="targetGames" min="1" step="1" value="{{ old('targetGames', $params['targetGames'] ?? '') }}" required>
+                    @error('targetGames')
                         <div class="error">{{ $message }}</div>
                     @enderror
                 </div>
-
-                <div class="form-group">
-                    <label for="dayEnd">Day End Time:</label>
-                    <input type="time" id="dayEnd" name="dayEnd" value="{{ old('dayEnd', $params['dayEnd'] ?? '17:00') }}" required>
-                    @error('dayEnd')
-                        <div class="error">{{ $message }}</div>
-                    @enderror
-                </div>
-                
 
                 <div class="form-group">
                     <label>Select Days and Times:</label>
@@ -371,29 +394,43 @@
                 </div>
             </div>
 
+
             @foreach($schedule as $weekNumber => $games)
                 <div class="week-container">
                     <h2 class="week-title">Week {{ $weekNumber }}</h2>
-                    @foreach($games as $game)
-                        <div class="game">
-                            <div class="teams">
-                                <div class="team">
-                                    <span class="team-id">#{{ $game['team1_id'] }}</span>
-                                    <span class="team-name">{{ $game['team1_name'] }}</span>
+                    
+                    {{-- Group games by day --}}
+                    @php
+                        $groupedGames = collect($games)->groupBy('day');
+                    @endphp
+                    
+                    @foreach($groupedGames as $day => $dayGames)
+                        <div class="day-section">
+                            <h3 class="day-title">
+                                {{ ucfirst($day) }}
+                            </h3>
+                            
+                            @foreach($dayGames as $game)
+                                <div class="game">
+                                    <div class="teams">
+                                        <div class="team">
+                                            <span class="team-id">#{{ $game['team1_id'] }}</span>
+                                            <span class="team-name">{{ $game['team1_name'] }}</span>
+                                        </div>
+                                        <span class="vs">vs</span>
+                                        <div class="team">
+                                            <span class="team-id">#{{ $game['team2_id'] }}</span>
+                                            <span class="team-name">{{ $game['team2_name'] }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="time">{{ $game['time'] }}</div>
+                                    <button 
+                                        onclick="openEditModal('{{ $game['team1_id'] }}', '{{ $game['team2_id'] }}', '{{ $game['day'] }}', '{{ $game['time'] }}')" 
+                                        class="edit-btn">
+                                        Edit Game
+                                    </button>
                                 </div>
-                                <span class="vs">vs</span>
-                                <div class="team">
-                                    <span class="team-id">#{{ $game['team2_id'] }}</span>
-                                    <span class="team-name">{{ $game['team2_name'] }}</span>
-                                </div>
-                            </div>
-                            <div class="time">{{ $game['time'] }}</div>
-                            {{--@include('editGameButton', ['game' => $game])--}}
-                            <button 
-                                onclick="openEditModal('{{ $game['team1_id'] }}', '{{ $game['team2_id'] }}', '{{ $game['time'] }}')" 
-                                class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                                Edit Game
-                            </button>
+                            @endforeach
                         </div>
                     @endforeach
                 </div>
@@ -418,7 +455,7 @@
                                 style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: white;">
                             </select>
                         </div>
-
+    
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;" for="team2">
                                 Team 2
@@ -426,6 +463,21 @@
                             <select id="modalTeam2" 
                                 name="team2_id" 
                                 style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: white;">
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;" for="gameDay">
+                                Game Day
+                            </label>
+                            <select id="modalGameDay" 
+                                name="day" 
+                                style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: white;">
+                                @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
+                                    @if(isset($params[$day.'_enabled']) && $params[$day.'_enabled'])
+                                        <option value="{{ $day }}">{{ ucfirst($day) }}</option>
+                                    @endif
+                                @endforeach
                             </select>
                         </div>
                         
@@ -461,6 +513,7 @@
         let originalTeam1Id = null;
         let originalTeam2Id = null;
         let currentGameElement = null;
+        let originalDay = null;
 
         // Extract teams from the schedule
         function extractTeamsFromSchedule() {
@@ -496,7 +549,7 @@
             });
         }
 
-        function openEditModal(team1Id, team2Id, gameTime) {
+        /*function openEditModal(team1Id, team2Id, gameTime) {
             originalTeam1Id = team1Id;
             originalTeam2Id = team2Id;
             currentGameElement = event.target.closest('.game');
@@ -510,13 +563,30 @@
             
             document.getElementById('modalTeam1').dispatchEvent(new Event('change'));
             document.getElementById('modalTeam2').dispatchEvent(new Event('change'));
+        }*/
+        function openEditModal(team1Id, team2Id, day, gameTime) {
+            originalTeam1Id = team1Id;
+            originalTeam2Id = team2Id;
+            originalDay = day;
+            currentGameElement = event.target.closest('.game');
+            
+            populateTeamDropdowns();
+            
+            document.getElementById('modalTeam1').value = team1Id;
+            document.getElementById('modalTeam2').value = team2Id;
+            document.getElementById('modalGameDay').value = day;
+            document.getElementById('modalGameTime').value = gameTime;
+            document.getElementById('editGameModal').classList.add('show');
+            
+            document.getElementById('modalTeam1').dispatchEvent(new Event('change'));
+            document.getElementById('modalTeam2').dispatchEvent(new Event('change'));
         }
 
         function closeEditModal() {
             document.getElementById('editGameModal').classList.remove('show');
         }
 
-        function updateGameDisplay(team1Id, team1Name, team2Id, team2Name, gameTime) {
+        /*function updateGameDisplay(team1Id, team1Name, team2Id, team2Name, gameTime) {
             if (!currentGameElement) return;
             
             const team1Element = currentGameElement.querySelector('.team:first-child');
@@ -532,6 +602,64 @@
             // Update the Edit Game button's onclick handler with new values
             const editButton = currentGameElement.querySelector('button');
             editButton.setAttribute('onclick', `openEditModal('${team1Id}', '${team2Id}', '${gameTime}')`);
+        }*/
+        function updateGameDisplay(team1Id, team1Name, team2Id, team2Name, gameTime, day) {
+            if (!currentGameElement) return;
+            
+            // Find the current day section
+            const currentDaySection = currentGameElement.closest('.day-section');
+            const newDayTitle = day.charAt(0).toUpperCase() + day.slice(1);
+            
+            // Update the game details
+            const team1Element = currentGameElement.querySelector('.team:first-child');
+            team1Element.querySelector('.team-id').textContent = '#' + team1Id;
+            team1Element.querySelector('.team-name').textContent = team1Name;
+            
+            const team2Element = currentGameElement.querySelector('.team:last-child');
+            team2Element.querySelector('.team-id').textContent = '#' + team2Id;
+            team2Element.querySelector('.team-name').textContent = team2Name;
+            
+            currentGameElement.querySelector('.time').textContent = gameTime;
+            
+            // Update the Edit Game button's onclick handler
+            const editButton = currentGameElement.querySelector('button');
+            editButton.setAttribute('onclick', 
+                `openEditModal('${team1Id}', '${team2Id}', '${day}', '${gameTime}')`);
+            
+            // If the day has changed, move the game to the correct day section
+            /*if (originalDay !== day) {
+                const targetDaySection = document.querySelector(`.day-section h3.day-title:contains('${newDayTitle}')`).closest('.day-section');
+                if (targetDaySection) {
+                    targetDaySection.appendChild(currentGameElement);
+                    
+                    // If the old day section is empty, remove it
+                    if (currentDaySection.querySelectorAll('.game').length === 0) {
+                        currentDaySection.remove();
+                    }
+                }
+            }*/
+            if (originalDay !== day) {
+                // Find the target day section by iterating through all day sections
+                const daySections = document.querySelectorAll('.day-section');
+                let targetDaySection = null;
+                
+                for (const section of daySections) {
+                    const titleElement = section.querySelector('.day-title');
+                    if (titleElement && titleElement.textContent.trim().toLowerCase() === newDayTitle.toLowerCase()) {
+                        targetDaySection = section;
+                        break;
+                    }
+                }
+                
+                if (targetDaySection) {
+                    targetDaySection.appendChild(currentGameElement);
+                    
+                    // If the old day section is empty, remove it
+                    if (currentDaySection.querySelectorAll('.game').length === 0) {
+                        currentDaySection.remove();
+                    }
+                }
+            }
         }
 
         function showNotification(message, type) {
@@ -580,7 +708,7 @@
         });
 
         // Single form submission handler
-        document.getElementById('editGameForm').addEventListener('submit', function(e) {
+        /*document.getElementById('editGameForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const formData = new FormData(this);
@@ -630,6 +758,62 @@
             .catch(error => {
                 console.error('Error:', error);
                 showNotification('An error occurred while updating the game.', 'error');
+            });
+        });*/
+        document.getElementById('editGameForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const team1Id = formData.get('team1_id');
+            const team2Id = formData.get('team2_id');
+            const gameTime = formData.get('time');
+            const day = formData.get('day');
+            
+            const token = document.querySelector('input[name="_token"]').value;
+            
+            fetch('/edit-game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    team1_id: team1Id,
+                    team2_id: team2Id,
+                    time: gameTime,
+                    day: day,
+                    original_team1_id: originalTeam1Id,
+                    original_team2_id: originalTeam2Id,
+                    original_day: originalDay
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    updateGameDisplay(
+                        team1Id,
+                        data.data.team1_name,
+                        team2Id,
+                        data.data.team2_name,
+                        gameTime,
+                        day
+                    );
+                    closeEditModal();
+                    showNotification('Game updated successfully!', 'success');
+                } else {
+                    showNotification(data.message || 'Failed to update game.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred while updating the game.', 'error');
+                showNotification(error, 'error'); //Error is TypeError: Cannot read properties of null (reading 'charAt')
             });
         });
 

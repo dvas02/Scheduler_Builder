@@ -9,13 +9,17 @@ class EditGameButtonController extends Controller
 {
     public function editGameHandler(Request $request)
     {
+
+
         // Validate the request
         $request->validate([
             'team1_id' => 'required|integer',
             'team2_id' => 'required|integer|different:team1_id',
             'time' => 'required|date_format:H:i',
+            'day' => 'required',
             'original_team1_id' => 'required|integer',
-            'original_team2_id' => 'required|integer'
+            'original_team2_id' => 'required|integer',
+            'original_day' => 'required',
         ]);
 
         try {
@@ -53,7 +57,9 @@ class EditGameButtonController extends Controller
                     if (($game['team1_id'] == $request->original_team1_id && 
                          $game['team2_id'] == $request->original_team2_id) ||
                         ($game['team1_id'] == $request->original_team2_id && 
-                         $game['team2_id'] == $request->original_team1_id)) {
+                         $game['team2_id'] == $request->original_team1_id) ||
+                         ($game['day'] == $request->original_day)
+                         ) {
                         
                         // Update game details
                         $schedule[$weekNumber][$index] = [
@@ -61,7 +67,8 @@ class EditGameButtonController extends Controller
                             'team2_id' => $request->team2_id,
                             'team1_name' => $team1[1],  // Index 1 contains the team name
                             'team2_name' => $team2[1],  // Index 1 contains the team name
-                            'time' => $request->time
+                            'time' => $request->time,
+                            'day' => $request->day,
                         ];
                         
                         $updated = true;

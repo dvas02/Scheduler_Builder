@@ -7,32 +7,65 @@ class ScheduleBuilder
     private $teams;
     private $weeks;
     private $gameLength;
-    private $dayStart;
-    private $dayEnd;
-    private $gamesPerDay;
+    private $availableDays;
+    private $gamesPerWeek;
     private $targetGamesPerTeam;
 
-    public function __construct(array $teams, int $weeks, int $gameLength, string $dayStart, string $dayEnd)
+    public function __construct(array $teams, int $weeks, int $gameLength, array $availableDays)
     {
         $this->teams = $teams;
         $this->weeks = $weeks;
         $this->gameLength = $gameLength;
-        $this->dayStart = $dayStart;
-        $this->dayEnd = $dayEnd;
+        $this->availableDays = $this->processDays($availableDays);
         
-        // Calculate how many games can fit in a day
-        $dayStartMinutes = $this->timeToMinutes($dayStart);
-        $dayEndMinutes = $this->timeToMinutes($dayEnd);
-        $availableMinutes = $dayEndMinutes - $dayStartMinutes;
-        $this->gamesPerDay = floor($availableMinutes / $gameLength);
+        // Calculate total games per week across all available days
+        $this->gamesPerWeek = $this->calculateGamesPerWeek();
         
         // Calculate target games per team based on available slots
-        $totalGameSlots = $this->weeks * $this->gamesPerDay;
+        $totalGameSlots = $this->weeks * $this->gamesPerWeek;
         $teamCount = count($teams);
         // Each game involves 2 teams, so multiply by 2
         $this->targetGamesPerTeam = floor(($totalGameSlots * 2) / $teamCount);
         // Ensure it's even since teams must play in pairs
         $this->targetGamesPerTeam = floor($this->targetGamesPerTeam / 2) * 2;
+    }
+
+    private function processDays(array $availableDays)
+    {
+        $processedDays = [];
+        
+        foreach ($availableDays as $day => $dayInfo) {
+            if (isset($dayInfo['enabled']) && $dayInfo['enabled']) {
+                $processedDays[$day] = [
+                    'start' => $dayInfo['start'],
+                    'end' => $dayInfo['end'],
+                    'games_per_day' => $this->calculateGamesPerDay(
+                        $dayInfo['start'],
+                        $dayInfo['end']
+                    )
+                ];
+            }
+        }
+        
+        return $processedDays;
+    }
+
+
+    private function calculateGamesPerDay($startTime, $endTime)
+    {
+        $startMinutes = $this->timeToMinutes($startTime);
+        $endMinutes = $this->timeToMinutes($endTime);
+        $availableMinutes = $endMinutes - $startMinutes;
+        return floor($availableMinutes / $this->gameLength);
+    }
+
+    private function calculateGamesPerWeek()
+    {
+        $total = 0;
+        foreach ($this->availableDays as $day) {
+            $total += $day['games_per_day'];
+        }
+        return $total;
     }
 
     public function generateSchedule()
@@ -50,81 +83,90 @@ class ScheduleBuilder
 
         // Create all possible matchups
         $matchups = $this->generateAllPossibleMatchups($teamCount);
-        
-        // Shuffle matchups to ensure randomness while maintaining balance
         shuffle($matchups);
 
         for ($week = 0; $week < $this->weeks; $week++) {
             $weekSchedule = [];
-            $gamesThisWeek = 0;
             $teamsPlayingThisWeek = [];
+            $gamesScheduledThisWeek = 0;
             $availableMatchups = $matchups; // Create a copy for this week
             
-            // Try to fill all available time slots in this week
-            while ($gamesThisWeek < $this->gamesPerDay && !empty($availableMatchups)) {
-                $matchupFound = false;
+            // Schedule games for each available day
+            foreach ($this->availableDays as $dayName => $dayInfo) {
+                $gamesThisDay = 0;
                 
-                foreach ($availableMatchups as $matchupIndex => $matchup) {
-                    $team1Index = $matchup[0];
-                    $team2Index = $matchup[1];
-                    $team1 = $this->teams[$team1Index];
-                    $team2 = $this->teams[$team2Index];
+                while ($gamesThisDay < $dayInfo['games_per_day'] && !empty($availableMatchups)) {
+                    $matchupFound = false;
+                    
+                    foreach ($availableMatchups as $matchupIndex => $matchup) {
+                        $team1Index = $matchup[0];
+                        $team2Index = $matchup[1];
+                        $team1 = $this->teams[$team1Index];
+                        $team2 = $this->teams[$team2Index];
 
-                    // Skip if either team has reached target games
-                    if ($gamesScheduled[$team1Index] >= $this->targetGamesPerTeam ||
-                        $gamesScheduled[$team2Index] >= $this->targetGamesPerTeam) {
-                        unset($availableMatchups[$matchupIndex]);
-                        unset($matchups[$matchupIndex]); // Remove from overall matchups too
-                        continue;
-                    }
+                        // Skip if either team has reached target games
+                        if ($gamesScheduled[$team1Index] >= $this->targetGamesPerTeam ||
+                            $gamesScheduled[$team2Index] >= $this->targetGamesPerTeam) {
+                            unset($availableMatchups[$matchupIndex]);
+                            unset($matchups[$matchupIndex]);
+                            continue;
+                        }
 
-                    // Skip if either team is already playing this week
-                    if (in_array($team1Index, $teamsPlayingThisWeek) ||
-                        in_array($team2Index, $teamsPlayingThisWeek)) {
-                        continue;
-                    }
+                        // Skip if either team is already playing this week
+                        if (in_array($team1Index, $teamsPlayingThisWeek) ||
+                            in_array($team2Index, $teamsPlayingThisWeek)) {
+                            continue;
+                        }
 
-                    // Skip games involving "BYE" team
-                    if ($team1[1] === "BYE" || $team2[1] === "BYE") {
+                        // Skip games involving "BYE" team
+                        if ($team1[1] === "BYE" || $team2[1] === "BYE") {
+                            unset($availableMatchups[$matchupIndex]);
+                            unset($matchups[$matchupIndex]);
+                            continue;
+                        }
+
+                        $gameTime = $this->getGameTime($dayInfo['start'], $gamesThisDay);
+                        
+                        $weekSchedule[] = [
+                            'team1_id' => $team1[0],
+                            'team1_name' => $team1[1],
+                            'team2_id' => $team2[0],
+                            'team2_name' => $team2[1],
+                            'day' => $dayName,
+                            'time' => $gameTime
+                        ];
+
+                        // Update tracking variables
+                        $gamesScheduled[$team1Index]++;
+                        $gamesScheduled[$team2Index]++;
+                        $gamesThisDay++;
+                        $gamesScheduledThisWeek++;
+                        $teamsPlayingThisWeek[] = $team1Index;
+                        $teamsPlayingThisWeek[] = $team2Index;
+
+                        // Remove used matchup
                         unset($availableMatchups[$matchupIndex]);
                         unset($matchups[$matchupIndex]);
-                        continue;
+                        $matchupFound = true;
+                        break;
                     }
 
-                    $gameTime = $this->getGameTime($gamesThisWeek);
-                    if ($gameTime === false) {
-                        break 2; // Break out of both loops if we can't schedule any more games today
+                    if (!$matchupFound) {
+                        break;
                     }
-
-                    $weekSchedule[] = [
-                        'team1_id' => $team1[0],
-                        'team1_name' => $team1[1],
-                        'team2_id' => $team2[0],
-                        'team2_name' => $team2[1],
-                        'time' => $gameTime
-                    ];
-
-                    // Update tracking variables
-                    $gamesScheduled[$team1Index]++;
-                    $gamesScheduled[$team2Index]++;
-                    $gamesThisWeek++;
-                    $teamsPlayingThisWeek[] = $team1Index;
-                    $teamsPlayingThisWeek[] = $team2Index;
-
-                    // Remove used matchup
-                    unset($availableMatchups[$matchupIndex]);
-                    unset($matchups[$matchupIndex]);
-                    $matchupFound = true;
-                    break;
-                }
-
-                // If no valid matchup was found, break the loop
-                if (!$matchupFound) {
-                    break;
                 }
             }
 
             if (!empty($weekSchedule)) {
+                // Sort games by day and time before adding to schedule
+                usort($weekSchedule, function($a, $b) {
+                    $dayOrder = $this->getDayOrder($a['day']) - $this->getDayOrder($b['day']);
+                    if ($dayOrder === 0) {
+                        return strcmp($a['time'], $b['time']);
+                    }
+                    return $dayOrder;
+                });
+                
                 $schedule[$week + 1] = $weekSchedule;
             }
         }
@@ -148,6 +190,20 @@ class ScheduleBuilder
         ];
     }
 
+    private function getDayOrder($day)
+    {
+        $dayOrder = [
+            'monday' => 1,
+            'tuesday' => 2,
+            'wednesday' => 3,
+            'thursday' => 4,
+            'friday' => 5,
+            'saturday' => 6,
+            'sunday' => 7
+        ];
+        return $dayOrder[$day] ?? 0;
+    }
+
     private function generateAllPossibleMatchups($teamCount)
     {
         $matchups = [];
@@ -159,18 +215,10 @@ class ScheduleBuilder
         return $matchups;
     }
 
-    private function getGameTime($gameIndex)
+    private function getGameTime($dayStart, $gameIndex)
     {
-        $startTime = $this->timeToMinutes($this->dayStart);
-        $endTime = $this->timeToMinutes($this->dayEnd);
-        
-        $gameStartMinutes = $startTime + ($gameIndex * $this->gameLength);
-        
-        if ($gameStartMinutes + $this->gameLength > $endTime) {
-            return false;
-        }
-        
-        return $this->minutesToTime($gameStartMinutes);
+        $startMinutes = $this->timeToMinutes($dayStart);
+        return $this->minutesToTime($startMinutes + ($gameIndex * $this->gameLength));
     }
 
     private function timeToMinutes($time)
