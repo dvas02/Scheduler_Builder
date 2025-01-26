@@ -20,6 +20,7 @@ class ScheduleController extends Controller
         $validationRules = [
             'weeks' => 'required|integer|min:1',
             'gameLength' => 'required|integer|min:15',
+            'targetGames' => 'required|integer|min:1',
         ];
 
         // Validation rules for each day
@@ -31,10 +32,15 @@ class ScheduleController extends Controller
 
         $validated = $request->validate($validationRules);
 
+        // Get teams directly - they're already in the correct format
+        $teams = Team::all();
+
         // Build params array with all form data
         $params = [
             'weeks' => $validated['weeks'],
             'gameLength' => $validated['gameLength'],
+            'targetGames' => $validated['targetGames'],
+            'numTeams' => count($teams),
         ];
 
         // Build available days array for ScheduleBuilder
@@ -53,15 +59,14 @@ class ScheduleController extends Controller
                 ];
             }
         }
-        // Get teams directly - they're already in the correct format
-        $teams = Team::all();
 
         // Create schedule builder with new parameter structure
         $generator = new ScheduleBuilder(
             $teams,
             $validated['weeks'],
             $validated['gameLength'],
-            $availableDays
+            $availableDays,
+            // Will need to add the targetGames here once the sched builder is ready to accept it
         );
 
         $result = $generator->generateSchedule();
@@ -75,6 +80,7 @@ class ScheduleController extends Controller
         return view('scheduler-page', [
             'schedule' => $result['schedule'],
             'statistics' => $result['statistics'],
+            'totalGameSlots' => $result['totalGameSlots'],
             'params' => $params
         ]);
     }

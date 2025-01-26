@@ -252,6 +252,98 @@
             background-color: #2980b9;
         }
 
+        .schedule-params {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .params-header {
+            color: #2c3e50;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .param-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .param-value {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .slots-status {
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .status-success {
+            background-color: #ebfbee;
+            border: 1px solid #d1fadf;
+        }
+
+        .status-error {
+            background-color: #fef2f2;
+            border: 1px solid #fee2e2;
+        }
+
+        .status-content {
+            text-align: center;
+        }
+
+        .status-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .status-details {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .status-success .status-details {
+            color: #059669;
+        }
+
+        .status-error .status-details {
+            color: #dc2626;
+        }
+
+        .slots-divider {
+            margin: 0 8px;
+            color: #666;
+        }
+
+        .extra-slots {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #059669;
+        }
+
         @keyframes slideIn {
             from {
                 transform: translateX(100%);
@@ -351,9 +443,57 @@
 
             @if(isset($schedule))
             <div class="schedule-params">
-                <div class="params-title">Current Schedule Parameters:</div>
+                {{--<div class="params-title">Current Schedule Parameters:</div>
                 <div>Weeks: {{ $params['weeks'] }}</div>
                 <div>Game Length: {{ $params['gameLength'] }} minutes</div>
+                <div>Number of Teams: {{ $params['numTeams'] }}</div>
+                <div>Target Number of Games Per Team: {{ $params['targetGames'] }}</div>
+                <div>Number of Games Slots Needed: {{ $params['targetGames'] * $params['numTeams'] }}</div>
+                <div>Number of Available Game Slots: {{ $totalGameSlots }}</div>--}}
+
+                <!-- Parameters Section -->
+                <div class="schedule-params">
+                    <h3 class="params-header">Schedule Parameters</h3>
+                    
+                    <div class="params-grid">
+                        <div class="param-group">
+                            <div class="param-label">Weeks</div>
+                            <div class="param-value">{{ $params['weeks'] }}</div>
+                        </div>
+                        <div class="param-group">
+                            <div class="param-label">Game Length</div>
+                            <div class="param-value">{{ $params['gameLength'] }} minutes</div>
+                        </div>
+                        <div class="param-group">
+                            <div class="param-label">Number of Teams</div>
+                            <div class="param-value">{{ $params['numTeams'] }}</div>
+                        </div>
+                        <div class="param-group">
+                            <div class="param-label">Games Per Team</div>
+                            <div class="param-value">{{ $params['targetGames'] }}</div>
+                        </div>
+                    </div>
+
+                    @php
+                        $slotsNeeded = $params['targetGames'] * $params['numTeams'];
+                        $extraSlots = $totalGameSlots - $slotsNeeded;
+                        $statusClass = $slotsNeeded <= $totalGameSlots ? 'status-success' : 'status-error';
+                    @endphp
+
+                    <div class="slots-status {{ $statusClass }}">
+                        <div class="status-content">
+                            <div class="status-header">Game Slots Status</div>
+                            <div class="status-details">
+                                <span class="slots-needed">{{ $slotsNeeded }} needed</span>
+                                <span class="slots-divider">/</span>
+                                <span class="slots-available">{{ $totalGameSlots }} available</span>
+                            </div>
+                            @if($extraSlots > 0)
+                                <div class="extra-slots">{{ $extraSlots }} extra slots available</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
                 
                 {{-- Days and Times Section --}}
                 <div class="days-times-section" style="margin-top: 15px;">
@@ -549,21 +689,7 @@
             });
         }
 
-        /*function openEditModal(team1Id, team2Id, gameTime) {
-            originalTeam1Id = team1Id;
-            originalTeam2Id = team2Id;
-            currentGameElement = event.target.closest('.game');
-            
-            populateTeamDropdowns();
-            
-            document.getElementById('modalTeam1').value = team1Id;
-            document.getElementById('modalTeam2').value = team2Id;
-            document.getElementById('modalGameTime').value = gameTime;
-            document.getElementById('editGameModal').classList.add('show');
-            
-            document.getElementById('modalTeam1').dispatchEvent(new Event('change'));
-            document.getElementById('modalTeam2').dispatchEvent(new Event('change'));
-        }*/
+
         function openEditModal(team1Id, team2Id, day, gameTime) {
             originalTeam1Id = team1Id;
             originalTeam2Id = team2Id;
@@ -586,23 +712,7 @@
             document.getElementById('editGameModal').classList.remove('show');
         }
 
-        /*function updateGameDisplay(team1Id, team1Name, team2Id, team2Name, gameTime) {
-            if (!currentGameElement) return;
-            
-            const team1Element = currentGameElement.querySelector('.team:first-child');
-            team1Element.querySelector('.team-id').textContent = '#' + team1Id;
-            team1Element.querySelector('.team-name').textContent = team1Name;
-            
-            const team2Element = currentGameElement.querySelector('.team:last-child');
-            team2Element.querySelector('.team-id').textContent = '#' + team2Id;
-            team2Element.querySelector('.team-name').textContent = team2Name;
-            
-            currentGameElement.querySelector('.time').textContent = gameTime;
-            
-            // Update the Edit Game button's onclick handler with new values
-            const editButton = currentGameElement.querySelector('button');
-            editButton.setAttribute('onclick', `openEditModal('${team1Id}', '${team2Id}', '${gameTime}')`);
-        }*/
+
         function updateGameDisplay(team1Id, team1Name, team2Id, team2Name, gameTime, day) {
             if (!currentGameElement) return;
             
@@ -628,17 +738,6 @@
             
             // If the day has changed, move the game to the correct day section
             /*if (originalDay !== day) {
-                const targetDaySection = document.querySelector(`.day-section h3.day-title:contains('${newDayTitle}')`).closest('.day-section');
-                if (targetDaySection) {
-                    targetDaySection.appendChild(currentGameElement);
-                    
-                    // If the old day section is empty, remove it
-                    if (currentDaySection.querySelectorAll('.game').length === 0) {
-                        currentDaySection.remove();
-                    }
-                }
-            }*/
-            if (originalDay !== day) {
                 // Find the target day section by iterating through all day sections
                 const daySections = document.querySelectorAll('.day-section');
                 let targetDaySection = null;
@@ -658,6 +757,66 @@
                     if (currentDaySection.querySelectorAll('.game').length === 0) {
                         currentDaySection.remove();
                     }
+                }
+            }*/
+            if (originalDay !== day) {
+                // Find the target day section by iterating through all day sections
+                const daySections = document.querySelectorAll('.day-section');
+                let targetDaySection = null;
+                
+                // First try to find an existing section for the new day
+                for (const section of daySections) {
+                    const titleElement = section.querySelector('.day-title');
+                    if (titleElement && titleElement.textContent.trim().toLowerCase() === newDayTitle.toLowerCase()) {
+                        targetDaySection = section;
+                        break;
+                    }
+                }
+                
+                // If no existing section found, create a new one
+                if (!targetDaySection) {
+                    targetDaySection = document.createElement('div');
+                    targetDaySection.className = 'day-section';
+                    
+                    const titleElement = document.createElement('h3');
+                    titleElement.className = 'day-title';
+                    titleElement.textContent = newDayTitle;
+                    
+                    targetDaySection.appendChild(titleElement);
+                    
+                    // Find the week container that contains the current game
+                    const weekContainer = currentGameElement.closest('.week-container');
+                    
+                    // Insert the new day section in the correct order
+                    const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                    const newDayIndex = dayOrder.indexOf(newDayTitle);
+                    
+                    let inserted = false;
+                    const existingDaySections = weekContainer.querySelectorAll('.day-section');
+                    
+                    for (const section of existingDaySections) {
+                        const sectionTitle = section.querySelector('.day-title').textContent;
+                        const sectionDayIndex = dayOrder.indexOf(sectionTitle);
+                        
+                        if (sectionDayIndex > newDayIndex) {
+                            section.parentNode.insertBefore(targetDaySection, section);
+                            inserted = true;
+                            break;
+                        }
+                    }
+                    
+                    // If we haven't inserted it yet, append it at the end
+                    if (!inserted) {
+                        weekContainer.appendChild(targetDaySection);
+                    }
+                }
+                
+                // Move the game to the target section
+                targetDaySection.appendChild(currentGameElement);
+                
+                // If the old day section is empty, remove it
+                if (currentDaySection.querySelectorAll('.game').length === 0) {
+                    currentDaySection.remove();
                 }
             }
         }

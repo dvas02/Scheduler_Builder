@@ -10,6 +10,7 @@ class ScheduleBuilder
     private $availableDays;
     private $gamesPerWeek;
     private $targetGamesPerTeam;
+    private $totalGameSlots;
 
     public function __construct(array $teams, int $weeks, int $gameLength, array $availableDays)
     {
@@ -18,14 +19,20 @@ class ScheduleBuilder
         $this->gameLength = $gameLength;
         $this->availableDays = $this->processDays($availableDays);
         
+        
         // Calculate total games per week across all available days
         $this->gamesPerWeek = $this->calculateGamesPerWeek();
         
         // Calculate target games per team based on available slots
-        $totalGameSlots = $this->weeks * $this->gamesPerWeek;
+        $this->totalGameSlots = $this->weeks * $this->gamesPerWeek;
+        
+        // TESTING TO SEE IF AVAIL SLOTS WORK
+        //$this->availSlots = $totalGameSlots;
+        // Ends here
+
         $teamCount = count($teams);
         // Each game involves 2 teams, so multiply by 2
-        $this->targetGamesPerTeam = floor(($totalGameSlots * 2) / $teamCount);
+        $this->targetGamesPerTeam = floor(($this->totalGameSlots * 2) / $teamCount);
         // Ensure it's even since teams must play in pairs
         $this->targetGamesPerTeam = floor($this->targetGamesPerTeam / 2) * 2;
     }
@@ -186,7 +193,8 @@ class ScheduleBuilder
 
         return [
             'schedule' => $schedule,
-            'statistics' => $statistics
+            'statistics' => $statistics,
+            'totalGameSlots' => $this->totalGameSlots,
         ];
     }
 

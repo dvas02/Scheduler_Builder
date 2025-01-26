@@ -11,7 +11,7 @@ class Team
         [2, 'Tigers'],
         [3, 'Bears'],
         [4, 'Hawks'],
-        [5, 'Eagles'],
+        /*[5, 'Eagles'],
         [6, 'Wolves'],
         [7, 'Alouettes'],
         [8, 'Patriots'],
@@ -26,8 +26,8 @@ class Team
         [17, 'Seventeen'],
         [18, 'Eighteen'],
         [19, 'Nineteen'],
-        [20, 'Twenty'],
-        [21, 'Twenty One'],
+        [20, 'Twenty'],*/
+        //[21, 'Twenty One'],
         //[22, 'Twenty Two']
     ];
 
