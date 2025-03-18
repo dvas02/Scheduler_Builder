@@ -23,19 +23,16 @@ class ScheduleBuilder
         // Calculate total games per week across all available days
         $this->gamesPerWeek = $this->calculateGamesPerWeek();
         
-        // Calculate target games per team based on available slots
+        // Calculate total game slots
         $this->totalGameSlots = $this->weeks * $this->gamesPerWeek;
         
-        // TESTING TO SEE IF AVAIL SLOTS WORK
-        //$this->availSlots = $totalGameSlots;
-        // Ends here
-
         $teamCount = count($teams);
         // Each game involves 2 teams, so multiply by 2
         $this->targetGamesPerTeam = floor(($this->totalGameSlots * 2) / $teamCount);
         // Ensure it's even since teams must play in pairs
         $this->targetGamesPerTeam = floor($this->targetGamesPerTeam / 2) * 2;
     }
+
 
     private function processDays(array $availableDays)
     {
@@ -46,9 +43,12 @@ class ScheduleBuilder
                 $processedDays[$day] = [
                     'start' => $dayInfo['start'],
                     'end' => $dayInfo['end'],
+                    'num_fields' => $dayInfo['_fields'] ?? 1,
+                    'field_name' => $dayInfo['_field_name'] ?? 'Field',
                     'games_per_day' => $this->calculateGamesPerDay(
                         $dayInfo['start'],
-                        $dayInfo['end']
+                        $dayInfo['end'],
+                        $dayInfo['_fields'] ?? 1
                     )
                 ];
             }
@@ -58,12 +58,13 @@ class ScheduleBuilder
     }
 
 
-    private function calculateGamesPerDay($startTime, $endTime)
+    private function calculateGamesPerDay($startTime, $endTime, $numFields)
     {
         $startMinutes = $this->timeToMinutes($startTime);
         $endMinutes = $this->timeToMinutes($endTime);
         $availableMinutes = $endMinutes - $startMinutes;
-        return floor($availableMinutes / $this->gameLength);
+        $gamesPerField = floor($availableMinutes / $this->gameLength);
+        return $gamesPerField * $numFields;
     }
 
     private function calculateGamesPerWeek()
@@ -132,7 +133,11 @@ class ScheduleBuilder
                             continue;
                         }
 
-                        $gameTime = $this->getGameTime($dayInfo['start'], $gamesThisDay);
+                        //$gameTime = $this->getGameTime($dayInfo['start'], $gamesThisDay);
+                        // UPDATED
+                        $gameTime = $this->getGameTime($dayInfo['start'], $gamesThisDay, $dayInfo['num_fields']);
+                        // Calculate which field this game is on
+                        $fieldNumber = ($gamesThisDay % $dayInfo['num_fields']) + 1;
                         
                         $weekSchedule[] = [
                             'team1_id' => $team1[0],
@@ -140,7 +145,9 @@ class ScheduleBuilder
                             'team2_id' => $team2[0],
                             'team2_name' => $team2[1],
                             'day' => $dayName,
-                            'time' => $gameTime
+                            'time' => $gameTime,
+                            // added field
+                            'field' => $dayInfo['field_name'] . ' ' . $fieldNumber
                         ];
 
                         // Update tracking variables
@@ -223,10 +230,18 @@ class ScheduleBuilder
         return $matchups;
     }
 
-    private function getGameTime($dayStart, $gameIndex)
+    /*private function getGameTime($dayStart, $gameIndex)
     {
         $startMinutes = $this->timeToMinutes($dayStart);
         return $this->minutesToTime($startMinutes + ($gameIndex * $this->gameLength));
+    }*/
+
+    private function getGameTime($dayStart, $gameIndex, $numFields)
+    {
+        // Calculate actual game index for a single field by dividing by number of fields
+        $gameIndexPerField = floor($gameIndex / $numFields);
+        $startMinutes = $this->timeToMinutes($dayStart);
+        return $this->minutesToTime($startMinutes + ($gameIndexPerField * $this->gameLength));
     }
 
     private function timeToMinutes($time)

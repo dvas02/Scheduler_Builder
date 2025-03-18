@@ -13,13 +13,18 @@ class EditGameButtonController extends Controller
 
         // Validate the request
         $request->validate([
+            // New values
             'team1_id' => 'required|integer',
             'team2_id' => 'required|integer|different:team1_id',
             'time' => 'required|date_format:H:i',
             'day' => 'required',
+            'field' => 'required',  // Add field validation
+
+            // Original values
             'original_team1_id' => 'required|integer',
             'original_team2_id' => 'required|integer',
             'original_day' => 'required',
+            'original_field' => 'required',  // Add original field validation
         ]);
 
         try {
@@ -58,7 +63,8 @@ class EditGameButtonController extends Controller
                          $game['team2_id'] == $request->original_team2_id) ||
                         ($game['team1_id'] == $request->original_team2_id && 
                          $game['team2_id'] == $request->original_team1_id) ||
-                         ($game['day'] == $request->original_day)
+                         $game['day'] == $request->original_day //&&
+                         //$game['field'] == $request->original_field  // Add field check
                          ) {
                         
                         // Update game details
@@ -69,6 +75,7 @@ class EditGameButtonController extends Controller
                             'team2_name' => $team2[1],  // Index 1 contains the team name
                             'time' => $request->time,
                             'day' => $request->day,
+                            //'field' => $request->field,  // Add field
                         ];
                         
                         $updated = true;
@@ -94,7 +101,8 @@ class EditGameButtonController extends Controller
                 'data' => [
                     'team1_name' => $team1[1],
                     'team2_name' => $team2[1],
-                    'time' => $request->time
+                    'time' => $request->time,
+                    //'field' => $request->field,
                 ]
             ]);
 

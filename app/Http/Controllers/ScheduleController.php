@@ -24,10 +24,16 @@ class ScheduleController extends Controller
         ];
 
         // Validation rules for each day
+            // Not validating the number of fields or field name since the default is one without any name
         foreach ($days as $day) {
             $validationRules[$day.'_enabled'] = 'sometimes|boolean';
             $validationRules[$day.'_start'] = 'required_if:'.$day.'_enabled,1|date_format:H:i';
             $validationRules[$day.'_end'] = 'required_if:'.$day.'_enabled,1|date_format:H:i|after:'.$day.'_start';
+            
+            // Added field num and name
+            // Add nullable to allow empty values which we'll handle in validation
+            $validationRules[$day.'_fields'] = 'nullable|integer|min:1';
+            $validationRules[$day.'_field_name'] = 'nullable|string';
         }
 
         $validated = $request->validate($validationRules);
@@ -50,12 +56,29 @@ class ScheduleController extends Controller
                 $params[$day.'_enabled'] = true;
                 $params[$day.'_start'] = $validated[$day.'_start'];
                 $params[$day.'_end'] = $validated[$day.'_end'];
+                $params[$day.'_fields'] = $validated[$day.'_fields'];
+                $params[$day.'_field_name'] = $validated[$day.'_field_name'];
+        
+                
+                // Added for num fields and name
+                // Set default value of 1 for fields if not provided or empty
+                if (empty($params[$day.'_fields'])) {
+                    $params[$day.'_fields'] = 1;
+                }
+
+                // Set default value of 'NONE' for field_name if not provided or empty
+                if (empty($params[$day.'_field_name'])) {
+                    $params[$day.'_field_name'] = 'Field';
+                }
                 
                 // Add to availableDays array in the format expected by ScheduleBuilder
                 $availableDays[$day] = [
                     'enabled' => true,
                     'start' => $validated[$day.'_start'],
-                    'end' => $validated[$day.'_end']
+                    'end' => $validated[$day.'_end'],
+                    '_fields' => $params[$day.'_fields'],
+                    '_field_name' => $params[$day.'_field_name'],
+                    
                 ];
             }
         }
@@ -66,7 +89,6 @@ class ScheduleController extends Controller
             $validated['weeks'],
             $validated['gameLength'],
             $availableDays,
-            // Will need to add the targetGames here once the sched builder is ready to accept it
         );
 
         $result = $generator->generateSchedule();
