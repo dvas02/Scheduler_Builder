@@ -486,6 +486,219 @@
             color: #666;
         }
 
+        /* Enhanced CSS for the game slot features with better visual styling */
+        .game-slots-container {
+            margin-bottom: 15px;
+        }
+
+        .game-slot {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .game-slot:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Add a subtle blue accent to the game slot */
+        .game-slot {
+            border-left: 4px solid #4a90e2;
+        }
+
+        .game-slot:not(:first-child) {
+            margin-top: 20px;
+            border-top: 2px dashed #ccc;
+        }
+
+        .game-slot-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .slot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .slot-field {
+            margin-bottom: 15px;
+        }
+
+        /* Style the select controls to look nicer and match width to content */
+        .select-control {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+            appearance: menulist;
+            height: 38px;
+            width: auto;
+            min-width: 100px;
+        }
+
+        /* Style the time inputs with proper spacing */
+        .time-input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+            height: 38px;
+            width: auto;
+            min-width: 150px;
+        }
+
+        /* Style number inputs */
+        .number-input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 14px;
+            height: 38px;
+            width: auto;
+            min-width: 80px;
+        }
+
+        /* Individual field styling */
+        .location-field label {
+            color: #4a90e2;
+            font-weight: 500;
+        }
+
+        .location-field {
+            min-width: 120px;
+            width: auto;
+        }
+
+        .time-field label {
+            color: #e67e22;
+            font-weight: 500;
+        }
+
+        .time-field {
+            min-width: 150px;
+            width: auto;
+        }
+
+        .fields-field label {
+            color: #27ae60;
+            font-weight: 500;
+        }
+
+        .fields-field {
+            min-width: 80px;
+            width: auto;
+        }
+
+        .division-field label {
+            color: #4a90e2;
+            font-weight: 500;
+        }
+
+        .division-field {
+            min-width: 120px;
+            width: auto;
+        }
+
+        /* Make day checkboxes larger */
+        .day-checkbox {
+            transform: scale(1.5);
+            margin-right: 8px;
+        }
+
+        .day-checkbox + label {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .add-slot-btn {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-slot-btn:hover {
+            background-color: #3a7bc8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .add-slot-btn i {
+            margin-right: 8px;
+        }
+
+        .remove-slot-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .remove-slot-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Labels for inputs */
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .game-slot-row {
+                flex-wrap: wrap;
+            }
+            
+            .slot-field {
+                min-width: 150px !important;
+                flex: 1 1 calc(50% - 10px);
+            }
+            
+            .division-field {
+                width: 100%;
+            }
+        }
+
+        /* end new styling */
+
 
         @keyframes slideIn {
             from {
@@ -503,103 +716,100 @@
     <div class="container">
         <h1>LeagueSuite Scheduler</h1>
         
+        <!-- Modified form-container section -->
         <div class="form-container">
-            <form method="POST" action="/scheduler"> 
-                <!-- @ csrf generates token for form request -->
+            <h2>Generate Schedule</h2>
+            <form id="scheduleForm" method="POST" action="/scheduler">
                 @csrf
-                
-                {{-- Form options (eg number of weeks, game length, etc) --}}
                 <div class="form-group">
                     <label for="weeks">Number of Weeks:</label>
-                    <input type="number" id="weeks" name="weeks" min="1" value="{{ old('weeks', $params['weeks'] ?? '') }}" required>
-                    @error('weeks')
-                        <div class="error">{{ $message }}</div>
-                    @enderror
+                    <input type="number" id="weeks" name="weeks" min="1" value="{{ $params['weeks'] ?? 3 }}" required>
                 </div>
-
                 <div class="form-group">
                     <label for="gameLength">Game Length (minutes):</label>
-                    <input type="number" id="gameLength" name="gameLength" min="15" step="15" value="{{ old('gameLength', $params['gameLength'] ?? '') }}" required>
-                    @error('gameLength')
-                        <div class="error">{{ $message }}</div>
-                    @enderror
+                    <input type="number" id="gameLength" name="gameLength" min="15" step="15" value="{{ $params['gameLength'] ?? 60 }}" required>
                 </div>
-
                 <div class="form-group">
-                    <label for="targetGames">Target Number of Games Per Team:</label>
-                    <input type="number" id="targetGames" name="targetGames" min="1" step="1" value="{{ old('targetGames', $params['targetGames'] ?? '') }}" required>
-                    @error('targetGames')
-                        <div class="error">{{ $message }}</div>
-                    @enderror
+                    <label for="targetGames">Target Games per Team:</label>
+                    <input type="number" id="targetGames" name="targetGames" min="1" value="{{ $params['targetGames'] ?? 4 }}" required>
                 </div>
-
-                <div class="form-group">
-                    <label>Select Days and Times:</label>
-                    <div class="days-picker">
-                        <div class="day-circles">
-                            @php
-                                $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                                $dayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-                            @endphp
-                            
-                            @foreach($days as $index => $day)
-                                <div class="day-circle {{ old($day.'_enabled', $params[$day.'_enabled'] ?? false) ? 'selected' : '' }}"
-                                     data-day="{{ $day }}">
-                                    <input type="checkbox" 
-                                           name="{{ $day }}_enabled" 
-                                           id="{{ $day }}_enabled"
-                                           value="1"
-                                           style="display: none;"
-                                           {{ old($day.'_enabled', $params[$day.'_enabled'] ?? false) ? 'checked' : '' }}>
-                                    {{ $dayLetters[$index] }}
-                                </div>
-                            @endforeach
+                
+                <div class="days-container">
+                    <h3>Available Days</h3>
+                    @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
+                    <div class="day-section">
+                        <div class="day-header">
+                            <input type="checkbox" id="{{ $day }}_enabled" name="{{ $day }}_enabled" value="1" 
+                                class="day-checkbox" {{ isset($params[$day.'_enabled']) && $params[$day.'_enabled'] ? 'checked' : '' }}>
+                            <label for="{{ $day }}_enabled">{{ ucfirst($day) }}</label>
                         </div>
                         
-                        <div id="timeInputsContainer">
-                            @foreach($days as $day)
-                                <div class="time-input-group" id="time-{{ $day }}" 
-                                     style="{{ old($day.'_enabled', $params[$day.'_enabled'] ?? false) ? '' : 'display: none;' }}">
-                                    <label>{{ ucfirst($day) }}:</label>
-                                    <div class="time-inputs">
-                                        <input type="time" 
-                                               name="{{ $day }}_start" 
-                                               value="{{ old($day.'_start', $params[$day.'_start'] ?? '09:00') }}"
-                                               {{ old($day.'_enabled', $params[$day.'_enabled'] ?? false) ? 'required' : '' }}>
-                                        <span>to</span>
-                                        <input type="time" 
-                                               name="{{ $day }}_end" 
-                                               value="{{ old($day.'_end', $params[$day.'_end'] ?? '17:00') }}"
-                                               {{ old($day.'_enabled', $params[$day.'_enabled'] ?? false) ? 'required' : '' }}>
+                        <div class="day-details" id="{{ $day }}_details" style="{{ isset($params[$day.'_enabled']) && $params[$day.'_enabled'] ? '' : 'display: none;' }}">
+                            <div class="game-slots-container" id="{{ $day }}_slots_container">
+                                <div class="game-slot">
+                                    <!-- New Location dropdown -->
+                        <div class="game-slot-row">
+                                    <div class="form-group slot-field location-field">
+                                        <label for="{{ $day }}_location">Location:</label>
+                                        <select id="{{ $day }}_location" name="{{ $day }}_location" class="select-control">
+                                            @foreach(\App\Models\Location::all() as $location)
+                                                <option value="{{ $location[0] }}">{{ $location[1] }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                    <div class="fields-input">
-                                        <div class="fields-section">
-                                            <label>Number of Fields:</label>
-                                            <input type="number" 
-                                                   name="{{ $day }}_fields"
-                                                   min="1"
-                                                   value="{{ old($day.'_fields', $params[$day.'_fields'] ?? '1') }}"
-                                                   {{ old($day.'_enabled', $params[$day.'_enabled'] ?? false) ? 'required' : '' }}
-                                                   class="fields-number">
-                                        </div>
-                                        <div class="fields-section">
-                                            <label>Field Name:</label>
-                                            <input type="text"
-                                                   name="{{ $day }}_field_name"
-                                                   value="{{ old($day.'_field_name', $params[$day.'_field_name'] ?? '') }}"
-                                                   placeholder="Enter field name"
-                                                   {{ old($day.'_enabled', $params[$day.'_enabled'] ?? false) ? 'required' : '' }}>
-                                        </div>
+                                    
+                                    <!-- Game time section with improved spacing -->
+                                    <div class="form-group slot-field time-field">
+                                        <label for="{{ $day }}_start">Start Time:</label>
+                                        <input type="time" id="{{ $day }}_start" name="{{ $day }}_start" 
+                                            value="{{ $params[$day.'_start'] ?? '09:00' }}" required class="time-input">
+                                    </div>
+                                    <div class="form-group slot-field time-field">
+                                        <label for="{{ $day }}_end">End Time:</label>
+                                        <input type="time" id="{{ $day }}_end" name="{{ $day }}_end" 
+                                            value="{{ $params[$day.'_end'] ?? '17:00' }}" required class="time-input">
+                                    </div>
+                                    
+                                    <!-- Fields section (simplified) -->
+                                    <div class="form-group slot-field fields-field">
+                                        <label for="{{ $day }}_fields">Number of Fields:</label>
+                                        <input type="number" id="{{ $day }}_fields" name="{{ $day }}_fields" min="1" 
+                                            value="{{ $params[$day.'_fields'] ?? 1 }}" class="number-input">
+                                    </div>
+                                    
+                                    <!-- Hidden field name input (removed from UI but kept for backend compatibility) -->
+                                    <input type="hidden" id="{{ $day }}_field_name" name="{{ $day }}_field_name" 
+                                        value="{{ $params[$day.'_field_name'] ?? 'Field' }}">
+                                    
+                                    <!-- Division dropdown with improved styling -->
+                                    <div class="form-group slot-field division-field">
+                                        <label for="{{ $day }}_division">Division:</label>
+                                        <select id="{{ $day }}_division" name="{{ $day }}_division" class="select-control">
+                                            <option value="">None</option>
+                                            <option value="1">Division 1</option>
+                                            <option value="2">Division 2</option>
+                                        </select>
                                     </div>
                                 </div>
-                            @endforeach
+                                </div>
+                            </div>
+                            
+                            <!-- Add Slot Button -->
+                            <button type="button" class="add-slot-btn" data-day="{{ $day }}">
+                                <i class="fas fa-plus"></i> Add Game Slot
+                            </button>
                         </div>
                     </div>
+                    @endforeach
                 </div>
-
+                
                 <button type="submit" class="submit-btn">Generate Schedule</button>
             </form>
         </div>
+
+
+
+
 
             @if(isset($schedule))
             <!-- Parameters Section -->
@@ -1278,6 +1488,119 @@
                 }
             });
         });
+    });
+
+
+    // ------- New menu javascript ------- //
+    // JavaScript to handle the adding of new game slots
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle checkbox toggle for days
+        document.querySelectorAll('.day-checkbox').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const day = this.id.replace('_enabled', '');
+                const details = document.getElementById(day + '_details');
+                if (this.checked) {
+                    details.style.display = 'block';
+                } else {
+                    details.style.display = 'none';
+                }
+            });
+        });
+        
+        // Handle add slot button clicks
+        document.querySelectorAll('.add-slot-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const day = this.getAttribute('data-day');
+                const container = document.getElementById(day + '_slots_container');
+                const slotCount = container.querySelectorAll('.game-slot').length;
+                const newSlotIndex = slotCount + 1;
+                
+                // Create new game slot with unique IDs
+                const newSlot = document.createElement('div');
+                newSlot.className = 'game-slot';
+                newSlot.innerHTML = `
+                    <div class="slot-header">
+                        <span>Game Slot ${newSlotIndex}</span>
+                        <button type="button" class="remove-slot-btn"><i class="fas fa-times"></i></button>
+                    </div>
+                    
+                    <div class="game-slot-row">
+                    <!-- Location dropdown with improved styling -->
+                    <div class="form-group slot-field location-field">
+                        <label for="${day}_location_${newSlotIndex}">Location:</label>
+                        <select id="${day}_location_${newSlotIndex}" name="${day}_location_${newSlotIndex}" class="select-control">
+                            ${generateLocationOptions()}
+                        </select>
+                    </div>
+                    
+                    <!-- Game time section with improved spacing -->
+                    <div class="form-group slot-field time-field">
+                        <label for="${day}_start_${newSlotIndex}">Start Time:</label>
+                        <input type="time" id="${day}_start_${newSlotIndex}" name="${day}_start_${newSlotIndex}" value="09:00" required class="time-input">
+                    </div>
+                    <div class="form-group slot-field time-field">
+                        <label for="${day}_end_${newSlotIndex}">End Time:</label>
+                        <input type="time" id="${day}_end_${newSlotIndex}" name="${day}_end_${newSlotIndex}" value="17:00" required class="time-input">
+                    </div>
+                    
+                    <!-- Fields section (simplified) -->
+                    <div class="form-group slot-field fields-field">
+                        <label for="${day}_fields_${newSlotIndex}">Number of Fields:</label>
+                        <input type="number" id="${day}_fields_${newSlotIndex}" name="${day}_fields_${newSlotIndex}" min="1" value="1" class="number-input">
+                    </div>
+                    
+                    <!-- Hidden field name input (removed from UI but kept for backend compatibility) -->
+                    <input type="hidden" id="${day}_field_name_${newSlotIndex}" name="${day}_field_name_${newSlotIndex}" value="Field">
+                    
+                    <!-- Division dropdown with improved styling -->
+                    <div class="form-group slot-field division-field">
+                        <label for="${day}_division_${newSlotIndex}">Division:</label>
+                        <select id="${day}_division_${newSlotIndex}" name="${day}_division_${newSlotIndex}" class="select-control">
+                            <option value="">None</option>
+                            <option value="1">Division 1</option>
+                            <option value="2">Division 2</option>
+                        </select>
+                    </div>
+                    </div>
+                `;
+                
+                container.appendChild(newSlot);
+                
+                // Add event listener to remove button
+                newSlot.querySelector('.remove-slot-btn').addEventListener('click', function() {
+                    container.removeChild(newSlot);
+                    // Update slot numbers for remaining slots
+                    updateSlotNumbers(container);
+                });
+            });
+        });
+        
+        // Helper function to generate location options
+        function generateLocationOptions() {
+            // This should match the locations from your Location model
+            const locations = [
+                [1, 'Lachine'],
+                [2, 'VSL'],
+                [3, 'CSL'],
+                [4, 'Brossard'],
+                [5, 'ST-Leonard']
+            ];
+            
+            return locations.map(location => 
+                `<option value="${location[0]}">${location[1]}</option>`
+            ).join('');
+        }
+        
+        // Helper function to update slot numbers
+        function updateSlotNumbers(container) {
+            const slots = container.querySelectorAll('.game-slot');
+            slots.forEach((slot, index) => {
+                const slotHeader = slot.querySelector('.slot-header span');
+                if (slotHeader) {
+                    slotHeader.textContent = `Game Slot ${index + 1}`;
+                }
+            });
+        }
     });
 
     </script>
