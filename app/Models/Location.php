@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Field
+class Location
 {
-    private static $fields = [
+    private static $locations = [
         [1, 'Lachine'],
         [2, 'VSL'],
         [3, 'CSL'],
@@ -16,6 +16,6 @@ class Field
 
     public static function all()
     {
-        return self::$fields;
+        return self::$locations;
     }
 }
