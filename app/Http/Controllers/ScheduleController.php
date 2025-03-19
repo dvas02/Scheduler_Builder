@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Team;
+use App\Models\Location;
 use App\Services\ScheduleBuilder;
 use Illuminate\Http\Request;
 
@@ -10,12 +11,17 @@ class ScheduleController extends Controller
 {
     public function index()
     {
-        return view('scheduler-page');
+        return view('scheduler-page', [
+            'locations' => Location::all(),
+            'divisions' => Location::divisions()
+        ]);
     }
 
     public function generateSchedule(Request $request)
     {
         $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $locations = Location::all();
+        $locationIds = array_column($locations, 0);
 
         $validationRules = [
             'weeks' => 'required|integer|min:1',
@@ -24,16 +30,19 @@ class ScheduleController extends Controller
         ];
 
         // Validation rules for each day
-            // Not validating the number of fields or field name since the default is one without any name
         foreach ($days as $day) {
             $validationRules[$day.'_enabled'] = 'sometimes|boolean';
             $validationRules[$day.'_start'] = 'required_if:'.$day.'_enabled,1|date_format:H:i';
             $validationRules[$day.'_end'] = 'required_if:'.$day.'_enabled,1|date_format:H:i|after:'.$day.'_start';
             
-            // Added field num and name
-            // Add nullable to allow empty values which we'll handle in validation
-            $validationRules[$day.'_fields'] = 'nullable|integer|min:1';
-            $validationRules[$day.'_field_name'] = 'nullable|string';
+            // For each location on each day
+            foreach ($locationIds as $locationId) {
+                $validationRules[$day.'_loc_'.$locationId.'_enabled'] = 'sometimes|boolean';
+                $validationRules[$day.'_loc_'.$locationId.'_start'] = 'nullable|date_format:H:i';
+                $validationRules[$day.'_loc_'.$locationId.'_end'] = 'nullable|date_format:H:i';
+                $validationRules[$day.'_loc_'.$locationId.'_fields'] = 'nullable|integer|min:1';
+                $validationRules[$day.'_loc_'.$locationId.'_division'] = 'nullable|integer|min:0|max:2';
+            }
         }
 
         $validated = $request->validate($validationRules);
@@ -56,29 +65,51 @@ class ScheduleController extends Controller
                 $params[$day.'_enabled'] = true;
                 $params[$day.'_start'] = $validated[$day.'_start'];
                 $params[$day.'_end'] = $validated[$day.'_end'];
-                $params[$day.'_fields'] = $validated[$day.'_fields'];
-                $params[$day.'_field_name'] = $validated[$day.'_field_name'];
-        
                 
-                // Added for num fields and name
-                // Set default value of 1 for fields if not provided or empty
-                if (empty($params[$day.'_fields'])) {
-                    $params[$day.'_fields'] = 1;
-                }
-
-                // Set default value of 'NONE' for field_name if not provided or empty
-                if (empty($params[$day.'_field_name'])) {
-                    $params[$day.'_field_name'] = 'Field';
+                // Handle locations for this day
+                $dayLocations = [];
+                foreach ($locationIds as $locationId) {
+                    $locationEnabled = $request->input($day.'_loc_'.$locationId.'_enabled', false);
+                    
+                    if ($locationEnabled) {
+                        $locationName = '';
+                        foreach ($locations as $loc) {
+                            if ($loc[0] == $locationId) {
+                                $locationName = $loc[1];
+                                break;
+                            }
+                        }
+                        
+                        // Get location specific data or use day defaults
+                        $locationStart = $request->input($day.'_loc_'.$locationId.'_start') ?? $validated[$day.'_start'];
+                        $locationEnd = $request->input($day.'_loc_'.$locationId.'_end') ?? $validated[$day.'_end'];
+                        $locationFields = $request->input($day.'_loc_'.$locationId.'_fields') ?? 1;
+                        $locationDivision = $request->input($day.'_loc_'.$locationId.'_division', 0);
+                        
+                        $dayLocations[$locationId] = [
+                            'enabled' => true,
+                            'name' => $locationName,
+                            'start' => $locationStart,
+                            'end' => $locationEnd,
+                            'num_fields' => $locationFields,
+                            'division' => $locationDivision,
+                        ];
+                        
+                        // Store in params for view
+                        $params[$day.'_loc_'.$locationId.'_enabled'] = true;
+                        $params[$day.'_loc_'.$locationId.'_start'] = $locationStart;
+                        $params[$day.'_loc_'.$locationId.'_end'] = $locationEnd;
+                        $params[$day.'_loc_'.$locationId.'_fields'] = $locationFields;
+                        $params[$day.'_loc_'.$locationId.'_division'] = $locationDivision;
+                    }
                 }
                 
-                // Add to availableDays array in the format expected by ScheduleBuilder
+                // Add to availableDays array with locations
                 $availableDays[$day] = [
                     'enabled' => true,
                     'start' => $validated[$day.'_start'],
                     'end' => $validated[$day.'_end'],
-                    '_fields' => $params[$day.'_fields'],
-                    '_field_name' => $params[$day.'_field_name'],
-                    
+                    'locations' => $dayLocations
                 ];
             }
         }
@@ -89,6 +120,7 @@ class ScheduleController extends Controller
             $validated['weeks'],
             $validated['gameLength'],
             $availableDays,
+            $locations
         );
 
         $result = $generator->generateSchedule();
@@ -103,7 +135,9 @@ class ScheduleController extends Controller
             'schedule' => $result['schedule'],
             'statistics' => $result['statistics'],
             'totalGameSlots' => $result['totalGameSlots'],
-            'params' => $params
+            'params' => $params,
+            'locations' => $locations,
+            'divisions' => Location::divisions()
         ]);
     }
 }
