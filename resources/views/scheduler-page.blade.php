@@ -118,7 +118,7 @@
                                                                         <input type="time" class="form-control" 
                                                                             id="{{ $day }}_loc_{{ $location[0] }}_start" 
                                                                             name="{{ $day }}_loc_{{ $location[0] }}_start" 
-                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_start'] ?? '' }}"
+                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_start'] ?? '18:00' }}"
                                                                             placeholder="Use day default">
                                                                     </div>
                                                                     <div class="col-md-3">
@@ -126,7 +126,7 @@
                                                                         <input type="time" class="form-control" 
                                                                             id="{{ $day }}_loc_{{ $location[0] }}_end" 
                                                                             name="{{ $day }}_loc_{{ $location[0] }}_end" 
-                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_end'] ?? '' }}"
+                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_end'] ?? '22:00' }}"
                                                                             placeholder="Use day default">
                                                                     </div>
                                                                     <div class="col-md-3">
@@ -136,12 +136,26 @@
                                                                             name="{{ $day }}_loc_{{ $location[0] }}_fields" min="1" 
                                                                             value="{{ $params[$day.'_loc_'.$location[0].'_fields'] ?? '1' }}">
                                                                     </div>
+                                                                    <!--
                                                                     <div class="col-md-3">
                                                                         <label for="{{ $day }}_loc_{{ $location[0] }}_field_name" class="form-label">Field Name Prefix</label>
                                                                         <input type="text" class="form-control" 
                                                                             id="{{ $day }}_loc_{{ $location[0] }}_field_name" 
                                                                             name="{{ $day }}_loc_{{ $location[0] }}_field_name" 
                                                                             value="{{ $params[$day.'_loc_'.$location[0].'_field_name'] ?? 'Field' }}">
+                                                                    </div>
+                                                                -->
+                                                                    <div class="col-md-3">
+                                                                        <label for="{{ $day }}_loc_{{ $location[0] }}_division" class="form-label">Division</label>
+                                                                        <select class="form-control" 
+                                                                            id="{{ $day }}_loc_{{ $location[0] }}_division" 
+                                                                            name="{{ $day }}_loc_{{ $location[0] }}_division">
+                                                                            @foreach($divisions as $divId => $divName)
+                                                                                <option value="{{ $divId }}" {{ isset($params[$day.'_loc_'.$location[0].'_division']) && $params[$day.'_loc_'.$location[0].'_division'] == $divId ? 'selected' : '' }}>
+                                                                                    {{ $divName }}
+                                                                                </option>
+                                                                            @endforeach
+                                                                        </select>
                                                                     </div>
                                                                 </div>
                                                             </div>
