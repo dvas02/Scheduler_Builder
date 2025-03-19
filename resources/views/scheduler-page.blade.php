@@ -1,1608 +1,523 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeagueSuite Scheduler</title>
+    <title>League Schedule Builder</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            line-height: 1.6;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-container {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #2c3e50;
-            font-weight: 500;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .submit-btn {
-            background-color: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-        }
-        .submit-btn:hover {
-            background-color: #2980b9;
-        }
-        .error {
-            color: #e74c3c;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-        .week-container {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .week-title {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        .game {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            gap: 15px;
-        }
-        .game:last-child {
-            border-bottom: none;
-        }
-        .teams {
-            flex: 1;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 20px;
-        }
-        .team {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .team-id {
-            font-size: 0.8em;
-            color: #666;
-            background: #eee;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-        .team-name {
-            font-weight: 500;
-        }
-        .time {
-            width: 100px;
-            text-align: right;
-            color: #666;
-        }
-        .vs {
-            color: #999;
-            font-weight: 300;
-        }
-        .days-times-section {
-            margin-top: 30px;
-            border-top: 1px solid #eee;
             padding-top: 20px;
+            padding-bottom: 40px;
         }
-
-        .params-subheader {
-            color: #2c3e50;
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        .days-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .day-param-group {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            transition: all 0.2s ease;
-        }
-
-        .day-param-group:hover {
-            background: #f1f3f5;
-        }
-
-        .day-header {
-            margin-bottom: 10px;
-        }
-
-        .day-name {
-            font-weight: 600;
-            color: #2c3e50;
-            text-transform: capitalize;
-        }
-
-        .day-details {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .time-slot {
-            color: #666;
-            font-size: 0.95rem;
-        }
-
-        .field-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .field-item {
-            background: #e9ecef;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            color: #495057;
-        }
-
-        /* Update existing schedule-params class to ensure proper spacing */
-        .schedule-params {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        .params-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none;
-        }  
-        .modal-overlay.show {
-            display: block;
-        }
-        .modal-content {
-            position: relative;
-            top: 10%;
-            margin: 0 auto;
-            padding: 20px;
-            background: white;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .notification {
-            animation: slideIn 0.3s ease-out;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .days-picker {
-            margin-top: 10px;
-        }
-
-        .day-circles {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .day-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #3498db;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-weight: 500;
-            color: #3498db;
-            background-color: white;
-            transition: all 0.2s ease;
-        }
-
-        .day-circle.selected {
-            background-color: #3498db;
-            color: white;
-        }
-
-        .time-input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
+        .location-details {
             padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-
-        .time-input-group label {
-            min-width: 100px;
-            font-weight: normal;
-        }
-
-        .time-inputs {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .time-inputs input[type="time"] {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 130px;
-        }
-
-        .time-inputs span {
-            color: #666;
-        }
-        .day-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-        }
-        
-        .day-section:last-child {
-            margin-bottom: 0;
-        }
-        
-        .day-title {
-            color: #2c3e50;
-            font-size: 1.1em;
-            font-weight: 500;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .edit-btn {
-            padding: 6px 12px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        
-        .edit-btn:hover {
-            background-color: #2980b9;
-        }
-
-        .schedule-params {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        .params-header {
-            color: #2c3e50;
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
-        }
-
-        .params-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .param-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .param-label {
-            color: #666;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .param-value {
-            color: #2c3e50;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .slots-status {
-            padding: 20px;
-            border-radius: 6px;
-            margin-top: 20px;
-        }
-
-        .status-success {
-            background-color: #ebfbee;
-            border: 1px solid #d1fadf;
-        }
-
-        .status-error {
-            background-color: #fef2f2;
-            border: 1px solid #fee2e2;
-        }
-
-        .status-content {
-            text-align: center;
-        }
-
-        .status-header {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #374151;
-        }
-
-        .status-details {
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .status-success .status-details {
-            color: #059669;
-        }
-
-        .status-error .status-details {
-            color: #dc2626;
-        }
-
-        .slots-divider {
-            margin: 0 8px;
-            color: #666;
-        }
-
-        .extra-slots {
-            margin-top: 8px;
-            font-size: 0.9rem;
-            color: #059669;
-        }
-        .fields-container {
-            margin-top: 15px;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-        }
-
-        .fields-input {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-top: 5px;
-            margin-bottom: 10px;
-        }
-
-        .fields-input label {
-            min-width: 100px;
-            color: #666;
-        }
-
-        .fields-input input[type="number"] {
-            width: 45px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .fields-input input[type="text"] {
-            width: 150px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .fields-number::-webkit-inner-spin-button,
-        .fields-number::-webkit-outer-spin-button {
-            opacity: 1;
-        }
-
-        .fields-section {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .game-details {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            min-width: 200px;
-            justify-content: flex-end;
-        }
-
-        .time, .field-name {
-            color: #666;
-        }
-
-        .field-name {
-            background: #f0f0f0;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
-        .open-slot {
-            background-color: #e7ffe7;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .open-slot .slot-info {
-            color: #666;
-        }
-
-        /* Enhanced CSS for the game slot features with better visual styling */
-        .game-slots-container {
-            margin-bottom: 15px;
-        }
-
-        .game-slot {
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            position: relative;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            transition: box-shadow 0.3s ease;
-        }
-
-        .game-slot:hover {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        /* Add a subtle blue accent to the game slot */
-        .game-slot {
-            border-left: 4px solid #4a90e2;
-        }
-
-        .game-slot:not(:first-child) {
-            margin-top: 20px;
-            border-top: 2px dashed #ccc;
-        }
-
-        .game-slot-row {
-            display: flex;
-            flex-wrap: nowrap;
-            align-items: flex-end;
-            gap: 10px;
-            justify-content: space-between;
-        }
-
-        .slot-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e0e0e0;
-            font-weight: bold;
-            color: #4a90e2;
-        }
-
-        .slot-field {
-            margin-bottom: 15px;
-        }
-
-        /* Style the select controls to look nicer and match width to content */
-        .select-control {
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background-color: white;
-            font-size: 14px;
-            appearance: menulist;
-            height: 38px;
-            width: auto;
-            min-width: 100px;
-        }
-
-        /* Style the time inputs with proper spacing */
-        .time-input {
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background-color: white;
-            font-size: 14px;
-            height: 38px;
-            width: auto;
-            min-width: 150px;
-        }
-
-        /* Style number inputs */
-        .number-input {
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background-color: white;
-            font-size: 14px;
-            height: 38px;
-            width: auto;
-            min-width: 80px;
-        }
-
-        /* Individual field styling */
-        .location-field label {
-            color: #4a90e2;
-            font-weight: 500;
-        }
-
-        .location-field {
-            min-width: 120px;
-            width: auto;
-        }
-
-        .time-field label {
-            color: #e67e22;
-            font-weight: 500;
-        }
-
-        .time-field {
-            min-width: 150px;
-            width: auto;
-        }
-
-        .fields-field label {
-            color: #27ae60;
-            font-weight: 500;
-        }
-
-        .fields-field {
-            min-width: 80px;
-            width: auto;
-        }
-
-        .division-field label {
-            color: #4a90e2;
-            font-weight: 500;
-        }
-
-        .division-field {
-            min-width: 120px;
-            width: auto;
-        }
-
-        /* Make day checkboxes larger */
-        .day-checkbox {
-            transform: scale(1.5);
-            margin-right: 8px;
-        }
-
-        .day-checkbox + label {
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .add-slot-btn {
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 14px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            margin-top: 8px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .add-slot-btn:hover {
-            background-color: #3a7bc8;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-        }
-
-        .add-slot-btn i {
-            margin-right: 8px;
-        }
-
-        .remove-slot-btn {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .remove-slot-btn:hover {
-            background-color: #c0392b;
-        }
-
-        /* Labels for inputs */
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 992px) {
-            .game-slot-row {
-                flex-wrap: wrap;
-            }
-            
-            .slot-field {
-                min-width: 150px !important;
-                flex: 1 1 calc(50% - 10px);
-            }
-            
-            .division-field {
-                width: 100%;
-            }
-        }
-
-        /* end new styling */
-
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>LeagueSuite Scheduler</h1>
-        
-        <!-- Modified form-container section -->
-        <div class="form-container">
-            <h2>Generate Schedule</h2>
-            <form id="scheduleForm" method="POST" action="/scheduler">
-                @csrf
-                <div class="form-group">
-                    <label for="weeks">Number of Weeks:</label>
-                    <input type="number" id="weeks" name="weeks" min="1" value="{{ $params['weeks'] ?? 3 }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="gameLength">Game Length (minutes):</label>
-                    <input type="number" id="gameLength" name="gameLength" min="15" step="15" value="{{ $params['gameLength'] ?? 60 }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="targetGames">Target Games per Team:</label>
-                    <input type="number" id="targetGames" name="targetGames" min="1" value="{{ $params['targetGames'] ?? 4 }}" required>
-                </div>
-                
-                <div class="days-container">
-                    <h3>Available Days</h3>
-                    @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                    <div class="day-section">
-                        <div class="day-header">
-                            <input type="checkbox" id="{{ $day }}_enabled" name="{{ $day }}_enabled" value="1" 
-                                class="day-checkbox" {{ isset($params[$day.'_enabled']) && $params[$day.'_enabled'] ? 'checked' : '' }}>
-                            <label for="{{ $day }}_enabled">{{ ucfirst($day) }}</label>
-                        </div>
-                        
-                        <div class="day-details" id="{{ $day }}_details" style="{{ isset($params[$day.'_enabled']) && $params[$day.'_enabled'] ? '' : 'display: none;' }}">
-                            <div class="game-slots-container" id="{{ $day }}_slots_container">
-                                <div class="game-slot">
-                                    <!-- New Location dropdown -->
-                        <div class="game-slot-row">
-                                    <div class="form-group slot-field location-field">
-                                        <label for="{{ $day }}_location">Location:</label>
-                                        <select id="{{ $day }}_location" name="{{ $day }}_location" class="select-control">
-                                            @foreach(\App\Models\Location::all() as $location)
-                                                <option value="{{ $location[0] }}">{{ $location[1] }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Game time section with improved spacing -->
-                                    <div class="form-group slot-field time-field">
-                                        <label for="{{ $day }}_start">Start Time:</label>
-                                        <input type="time" id="{{ $day }}_start" name="{{ $day }}_start" 
-                                            value="{{ $params[$day.'_start'] ?? '09:00' }}" required class="time-input">
-                                    </div>
-                                    <div class="form-group slot-field time-field">
-                                        <label for="{{ $day }}_end">End Time:</label>
-                                        <input type="time" id="{{ $day }}_end" name="{{ $day }}_end" 
-                                            value="{{ $params[$day.'_end'] ?? '17:00' }}" required class="time-input">
-                                    </div>
-                                    
-                                    <!-- Fields section (simplified) -->
-                                    <div class="form-group slot-field fields-field">
-                                        <label for="{{ $day }}_fields">Number of Fields:</label>
-                                        <input type="number" id="{{ $day }}_fields" name="{{ $day }}_fields" min="1" 
-                                            value="{{ $params[$day.'_fields'] ?? 1 }}" class="number-input">
-                                    </div>
-                                    
-                                    <!-- Hidden field name input (removed from UI but kept for backend compatibility) -->
-                                    <input type="hidden" id="{{ $day }}_field_name" name="{{ $day }}_field_name" 
-                                        value="{{ $params[$day.'_field_name'] ?? 'Field' }}">
-                                    
-                                    <!-- Division dropdown with improved styling -->
-                                    <div class="form-group slot-field division-field">
-                                        <label for="{{ $day }}_division">Division:</label>
-                                        <select id="{{ $day }}_division" name="{{ $day }}_division" class="select-control">
-                                            <option value="">None</option>
-                                            <option value="1">Division 1</option>
-                                            <option value="2">Division 2</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Add Slot Button -->
-                            <button type="button" class="add-slot-btn" data-day="{{ $day }}">
-                                <i class="fas fa-plus"></i> Add Game Slot
-                            </button>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-                
-                <button type="submit" class="submit-btn">Generate Schedule</button>
-            </form>
+<div class="container">
+    <h1 class="mb-4">League Schedule Builder</h1>
+
+    <!-- Schedule Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Configure Schedule</h5>
         </div>
-
-
-
-
-
-            @if(isset($schedule))
-            <!-- Parameters Section -->
-            <div class="schedule-params">
-                <h3 class="params-header">Schedule Parameters</h3>
+        <div class="card-body">
+            <form method="POST" action="/scheduler">
+                @csrf
                 
-                <div class="params-grid">
-                    <div class="param-group">
-                        <div class="param-label">Weeks</div>
-                        <div class="param-value">{{ $params['weeks'] }}</div>
+                <!-- Basic Settings -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="weeks" class="form-label">Number of Weeks</label>
+                        <input type="number" class="form-control" id="weeks" name="weeks" min="1" value="{{ $params['weeks'] ?? 8 }}">
                     </div>
-                    <div class="param-group">
-                        <div class="param-label">Game Length</div>
-                        <div class="param-value">{{ $params['gameLength'] }} minutes</div>
+                    <div class="col-md-4">
+                        <label for="gameLength" class="form-label">Game Length (minutes)</label>
+                        <input type="number" class="form-control" id="gameLength" name="gameLength" min="15" step="15" value="{{ $params['gameLength'] ?? 60 }}">
                     </div>
-                    <div class="param-group">
-                        <div class="param-label">Number of Teams</div>
-                        <div class="param-value">{{ $params['numTeams'] }}</div>
-                    </div>
-                    <div class="param-group">
-                        <div class="param-label">Games Per Team</div>
-                        <div class="param-value">{{ $params['targetGames'] }}</div>
+                    <div class="col-md-4">
+                        <label for="targetGames" class="form-label">Target Games per Team</label>
+                        <input type="number" class="form-control" id="targetGames" name="targetGames" min="1" value="{{ $params['targetGames'] ?? 10 }}">
                     </div>
                 </div>
-            
-                @php
-                    $slotsNeeded = $params['targetGames'] * $params['numTeams'];
-                    $slotsNeeded = $slotsNeeded / 2;
-                    $extraSlots = $totalGameSlots - $slotsNeeded;
-                    $statusClass = $slotsNeeded <= $totalGameSlots ? 'status-success' : 'status-error';
-                @endphp
-            
-                <div class="slots-status {{ $statusClass }}">
-                    <div class="status-content">
-                        <div class="status-header">Game Slots Status</div>
-                        <div class="status-details">
-                            <span class="slots-needed">{{ $slotsNeeded }} needed</span>
-                            <span class="slots-divider">/</span>
-                            <span class="slots-available">{{ $totalGameSlots }} available</span>
-                        </div>
-                        @if($extraSlots > 0)
-                            <div class="extra-slots">{{ $extraSlots }} extra slots available</div>
-                        @endif
+                
+                <!-- Days Configuration -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6>Available Days</h6>
                     </div>
-                </div>
-            
-                <div class="days-times-section">
-                    <h4 class="params-subheader">Available Days and Times</h4>
-                    <div class="days-grid">
+                    <div class="card-body">
                         @php
-                            $enabledDays = [];
                             $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                            foreach ($days as $day) {
-                                if (isset($params[$day.'_enabled']) && $params[$day.'_enabled']) {
-                                    $enabledDays[] = $day;
-                                }
-                            }
+                            $displayDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
                         @endphp
                         
-                        @foreach($days as $day)
-                            @if(isset($params[$day.'_enabled']) && $params[$day.'_enabled'])
-                                <div class="day-param-group">
-                                    <div class="day-header">
-                                        <span class="day-name">{{ ucfirst($day) }}</span>
-                                    </div>
-                                    <div class="day-details">
-                                        <div class="time-slot">{{ $params[$day.'_start'] }} to {{ $params[$day.'_end'] }}</div>
-                                        <div class="field-list">
-                                            @for($i = 1; $i <= $params[$day.'_fields']; $i++)
-                                                <span class="field-item">
-                                                    {{ $params[$day.'_field_name'] }} {{ $i }}
-                                                </span>
-                                            @endfor
+                        <div class="accordion" id="daysAccordion">
+                            @foreach($days as $index => $day)
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading{{ $day }}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#collapse{{ $day }}" aria-expanded="false" aria-controls="collapse{{ $day }}">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input day-toggle" type="checkbox" id="{{ $day }}_enabled" 
+                                                    name="{{ $day }}_enabled" value="1" 
+                                                    {{ isset($params[$day.'_enabled']) && $params[$day.'_enabled'] ? 'checked' : '' }}
+                                                    onclick="event.stopPropagation();">
+                                                <label class="form-check-label" for="{{ $day }}_enabled">{{ $displayDays[$index] }}</label>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ $day }}" class="accordion-collapse collapse" 
+                                        aria-labelledby="heading{{ $day }}" data-bs-parent="#daysAccordion">
+                                        <div class="accordion-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label for="{{ $day }}_start" class="form-label">Start Time</label>
+                                                    <input type="time" class="form-control" id="{{ $day }}_start" 
+                                                        name="{{ $day }}_start" value="{{ $params[$day.'_start'] ?? '18:00' }}">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="{{ $day }}_end" class="form-label">End Time</label>
+                                                    <input type="time" class="form-control" id="{{ $day }}_end" 
+                                                        name="{{ $day }}_end" value="{{ $params[$day.'_end'] ?? '22:00' }}">
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Locations for this day -->
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h6>Locations Available on {{ $displayDays[$index] }}</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    @foreach($locations ?? [] as $location)
+                                                        <div class="location-section mb-3">
+                                                            <div class="form-check form-switch mb-2">
+                                                                <input class="form-check-input location-toggle" type="checkbox" 
+                                                                    id="{{ $day }}_loc_{{ $location[0] }}_enabled" 
+                                                                    name="{{ $day }}_loc_{{ $location[0] }}_enabled" value="1"
+                                                                    {{ isset($params[$day.'_loc_'.$location[0].'_enabled']) && $params[$day.'_loc_'.$location[0].'_enabled'] ? 'checked' : '' }}>
+                                                                <label class="form-check-label" for="{{ $day }}_loc_{{ $location[0] }}_enabled">
+                                                                    {{ $location[1] }}
+                                                                </label>
+                                                            </div>
+                                                            
+                                                            <div class="location-details" id="{{ $day }}_loc_{{ $location[0] }}_details" 
+                                                                 style="display: {{ isset($params[$day.'_loc_'.$location[0].'_enabled']) && $params[$day.'_loc_'.$location[0].'_enabled'] ? 'block' : 'none' }}">
+                                                                <div class="row">
+                                                                    <div class="col-md-3">
+                                                                        <label for="{{ $day }}_loc_{{ $location[0] }}_start" class="form-label">Start Time</label>
+                                                                        <input type="time" class="form-control" 
+                                                                            id="{{ $day }}_loc_{{ $location[0] }}_start" 
+                                                                            name="{{ $day }}_loc_{{ $location[0] }}_start" 
+                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_start'] ?? '' }}"
+                                                                            placeholder="Use day default">
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label for="{{ $day }}_loc_{{ $location[0] }}_end" class="form-label">End Time</label>
+                                                                        <input type="time" class="form-control" 
+                                                                            id="{{ $day }}_loc_{{ $location[0] }}_end" 
+                                                                            name="{{ $day }}_loc_{{ $location[0] }}_end" 
+                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_end'] ?? '' }}"
+                                                                            placeholder="Use day default">
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label for="{{ $day }}_loc_{{ $location[0] }}_fields" class="form-label">Number of Fields</label>
+                                                                        <input type="number" class="form-control" 
+                                                                            id="{{ $day }}_loc_{{ $location[0] }}_fields" 
+                                                                            name="{{ $day }}_loc_{{ $location[0] }}_fields" min="1" 
+                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_fields'] ?? '1' }}">
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label for="{{ $day }}_loc_{{ $location[0] }}_field_name" class="form-label">Field Name Prefix</label>
+                                                                        <input type="text" class="form-control" 
+                                                                            id="{{ $day }}_loc_{{ $location[0] }}_field_name" 
+                                                                            name="{{ $day }}_loc_{{ $location[0] }}_field_name" 
+                                                                            value="{{ $params[$day.'_loc_'.$location[0].'_field_name'] ?? 'Field' }}">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            @endif
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
                 </div>
-
-                {{-- Removed for demo to rob
-                <div class="stats-container">
-                    <div class="params-title" style="margin-top: 20px;">Games Per Team:</div>
-                    <div class="team-stats">
-                        @foreach($statistics as $stat)
-                            <div class="team-stat">
-                                <span class="team-id">#{{ $stat['id'] }}</span>
-                                <span class="team-name">{{ $stat['name'] }}</span>
-                                <span class="game-count">{{ $stat['games'] }} games</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                --}}
-
-
-            </div>
-            @foreach($schedule as $weekNumber => $games)
-                <div class="week-container">
-                    <h2 class="week-title">Week {{ $weekNumber }}</h2>
-                    @php
-                        $groupedGames = collect($games)->groupBy('day');
-                    @endphp
-                    
-                    @foreach($enabledDays as $dayName)
-                        @php
-                            $dayNameLower = strtolower($dayName);
-                            $dayGames = $groupedGames->has($dayNameLower) ? $groupedGames->get($dayNameLower) : collect();
-                            $dayStart = $params[$dayNameLower.'_start'];
-                            $dayEnd = $params[$dayNameLower.'_end'];
-                            $gameLength = $params['gameLength'];
-                            $currentTime = strtotime($dayStart);
-                            $endTime = strtotime($dayEnd);
-                            $timeSlots = [];
-                            while ($currentTime + ($gameLength * 60) <= $endTime) {
-                                $timeSlots[] = date('H:i', $currentTime);
-                                $currentTime += $gameLength * 60;
-                            }
-                            $fieldsCount = $params[$dayNameLower.'_fields'];
-                            $fieldName = $params[$dayNameLower.'_field_name'];
-                            $fieldGroupedGames = $dayGames->groupBy('field');
-                        @endphp
-                        
-                        <div class="day-section">
-                            <h3 class="day-title">{{ ucfirst($dayName) }}</h3>
-                            @for($i = 1; $i <= $fieldsCount; $i++)
-                                @php
-                                    $currentField = $fieldName . ' ' . $i;
-                                    $gamesInField = $fieldGroupedGames->get($currentField, collect());
-                                    $occupiedSlots = $gamesInField->pluck('time')->toArray();
-                                @endphp
-                                <div class="field-section">
-                                    <h4 class="field-title">{{ $currentField }}</h4>
-                                    @foreach($timeSlots as $slot)
-                                        @if(in_array($slot, $occupiedSlots))
-                                            @php $game = $gamesInField->firstWhere('time', $slot) @endphp
-                                            <div class="game">
-                                                <div class="teams">
-                                                    <div class="team">
-                                                        <span class="team-id">#{{ $game['team1_id'] }}</span>
-                                                        <span class="team-name">{{ $game['team1_name'] }}</span>
-                                                    </div>
-                                                    <span class="vs">vs</span>
-                                                    <div class="team">
-                                                        <span class="team-id">#{{ $game['team2_id'] }}</span>
-                                                        <span class="team-name">{{ $game['team2_name'] }}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="game-details">
-                                                    <span class="time">{{ $game['time'] }}</span>
-                                                    <span class="field-name">{{ $game['field'] }}</span>
-                                                </div>
-                                                <button 
-                                                    onclick="openEditModal('{{ $game['team1_id'] }}', '{{ $game['team2_id'] }}', '{{ $game['day'] }}', '{{ $game['field'] }}', '{{ $game['time'] }}')" 
-                                                    class="edit-btn">
-                                                    Edit Game
-                                                </button>
-                                            </div>
-                                        @else
-                                            <div class="open-slot">
-                                                <div class="slot-info">
-                                                    Open Spot • {{ $currentField }} • {{ $slot }}
-                                                </div>
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            @endfor
-                        </div>
-                    @endforeach
-                </div>
-            @endforeach
-        @endif
-    </div>
-    <!-- MODAL -->
-    <div id="editGameModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="mt-3">
-                <h3 style="font-size: 1.125rem; font-weight: 500; color: #1a202c; margin-bottom: 1rem;">Edit Game</h3>
-                <div class="mt-2 px-7 py-3">
-                    <form id="editGameForm" action="{{ route('editGame') }}" method="POST">
-                        @csrf
-                        
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;" for="team1">
-                                Team 1
-                            </label>
-                            <select id="modalTeam1" 
-                                name="team1_id" 
-                                style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: white;">
-                            </select>
-                        </div>
-    
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;" for="team2">
-                                Team 2
-                            </label>
-                            <select id="modalTeam2" 
-                                name="team2_id" 
-                                style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: white;">
-                            </select>
-                        </div>
-                        
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;" for="gameDay">
-                                Game Day
-                            </label>
-                            <select id="modalGameDay" 
-                                name="day" 
-                                style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: white;">
-                                @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                                    @if(isset($params[$day.'_enabled']) && $params[$day.'_enabled'])
-                                        <option value="{{ $day }}">{{ ucfirst($day) }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;" for="field">
-                                Field
-                            </label>
-                            <select id="modalField" 
-                                name="field" 
-                                style="width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem; background-color: white;">
-                            </select>
-                        </div>
-                        
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 0.5rem;" for="gameTime">
-                                Game Time
-                            </label>
-                            <input type="time" 
-                                id="modalGameTime" 
-                                name="time" 
-                                style="width: 100%; min-width: 200px; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem;">
-                        </div>
-                        
-                        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
-                            <button type="button" 
-                                    onclick="closeEditModal()" 
-                                    style="padding: 0.5rem 1rem; background-color: #e2e8f0; border-radius: 0.375rem; cursor: pointer;">
-                                Cancel
-                            </button>
-                            <button type="submit"
-                                    style="padding: 0.5rem 1rem; background-color: #3498db; color: white; border-radius: 0.375rem; cursor: pointer;">
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                
+                <button type="submit" class="btn btn-primary">Generate Schedule</button>
+            </form>
         </div>
     </div>
 
-    <script>
-        // Must remain top of script
-        let originalTeam1Id = null;
-        let originalTeam2Id = null;
-        let currentGameElement = null;
-        let originalDay = null;
-        let originalField = null;
-        let originalTime = null;
-
-        // Extract teams from the schedule
-        function extractTeamsFromSchedule() {
-            const teams = new Map();
-            const games = document.querySelectorAll('.game');
-            
-            games.forEach(game => {
-                const team1Id = game.querySelector('.team:first-child .team-id').textContent.replace('#', '');
-                const team1Name = game.querySelector('.team:first-child .team-name').textContent;
-                const team2Id = game.querySelector('.team:last-child .team-id').textContent.replace('#', '');
-                const team2Name = game.querySelector('.team:last-child .team-name').textContent;
-                
-                teams.set(team1Id, team1Name);
-                teams.set(team2Id, team2Name);
-            });
-            
-            return Array.from(teams, ([id, name]) => ({ id, name }));
-        }
-
-        function populateTeamDropdowns() {
-            const teams = extractTeamsFromSchedule();
-            const team1Select = document.getElementById('modalTeam1');
-            const team2Select = document.getElementById('modalTeam2');
-            
-            team1Select.innerHTML = '';
-            team2Select.innerHTML = '';
-            
-            teams.forEach(team => {
-                const option1 = new Option(team.name, team.id);
-                const option2 = new Option(team.name, team.id);
-                team1Select.add(option1);
-                team2Select.add(option2);
-            });
-        }
-
-        function populateFieldDropdown() {
-            const selectedDay = document.getElementById('modalGameDay').value;
-            const fieldSelect = document.getElementById('modalField');
-            
-            // Clear existing options
-            fieldSelect.innerHTML = '';
-            
-            // Get the field information from the day's parameters
-            const fieldNameInput = document.querySelector(`input[name="${selectedDay}_field_name"]`);
-            const numFieldsInput = document.querySelector(`input[name="${selectedDay}_fields"]`);
-            
-            if (fieldNameInput && numFieldsInput) {
-                const fieldName = fieldNameInput.value;
-                const numFields = parseInt(numFieldsInput.value);
-                
-                // Create options for each field
-                for (let i = 1; i <= numFields; i++) {
-                    const option = new Option(`${fieldName} ${i}`, `${fieldName} ${i}`);
-                    fieldSelect.add(option);
-                }
-                
-                // If there's a current game being edited, try to select its field
-                if (currentGameElement) {
-                    const currentField = currentGameElement.querySelector('.field-name').textContent.trim();
-                    // Find and select the matching option if it exists
-                    const matchingOption = Array.from(fieldSelect.options).find(option => option.value === currentField);
-                    if (matchingOption) {
-                        fieldSelect.value = currentField;
-                    }
-                }
-            }
-        }
-
-
-        function openEditModal(team1Id, team2Id, day, field, gameTime) {
-            originalTeam1Id = team1Id;
-            originalTeam2Id = team2Id;
-            originalDay = day;
-            originalField = field;
-            originalTime = gameTime;
-            currentGameElement = event.target.closest('.game');
-            
-            populateTeamDropdowns();
-            
-            document.getElementById('modalTeam1').value = team1Id;
-            document.getElementById('modalTeam2').value = team2Id;
-            document.getElementById('modalGameDay').value = day;
-            document.getElementById('modalGameTime').value = gameTime;
-            document.getElementById('editGameModal').classList.add('show');
-
-            // Trigger change event to populate fields based on the selected day
-            document.getElementById('modalGameDay').dispatchEvent(new Event('change'));
-            
-            document.getElementById('modalTeam1').dispatchEvent(new Event('change'));
-            document.getElementById('modalTeam2').dispatchEvent(new Event('change'));
-        }
-
-        function closeEditModal() {
-            document.getElementById('editGameModal').classList.remove('show');
-        }
-
+    <!-- Generated Schedule -->
+    @if(isset($schedule))
+        <div class="card">
+            <div class="card-header">
+                <h5>Generated Schedule</h5>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="scheduleAccordion">
+                    @foreach($schedule as $weekNumber => $games)
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="weekHeading{{ $weekNumber }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#weekCollapse{{ $weekNumber }}" aria-expanded="false" 
+                                    aria-controls="weekCollapse{{ $weekNumber }}">
+                                    Week {{ $weekNumber }} ({{ count($games) }} games)
+                                </button>
+                            </h2>
+                            <div id="weekCollapse{{ $weekNumber }}" class="accordion-collapse collapse" 
+                                aria-labelledby="weekHeading{{ $weekNumber }}" data-bs-parent="#scheduleAccordion">
+                                <div class="accordion-body">
+                                    
+                                    @php
+                                        // Group games by day
+                                        $gamesByDay = [];
+                                        foreach ($games as $game) {
+                                            if (!isset($gamesByDay[$game['day']])) {
+                                                $gamesByDay[$game['day']] = [];
+                                            }
+                                            $gamesByDay[$game['day']][] = $game;
+                                        }
+                                        // Sort days
+                                        ksort($gamesByDay);
+                                    @endphp
+                                    
+                                    <div class="accordion" id="dayAccordion{{ $weekNumber }}">
+                                        @foreach($gamesByDay as $day => $dayGames)
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="dayHeading{{ $weekNumber }}_{{ $day }}">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                        data-bs-target="#dayCollapse{{ $weekNumber }}_{{ $day }}" 
+                                                        aria-expanded="false" aria-controls="dayCollapse{{ $weekNumber }}_{{ $day }}">
+                                                        {{ ucfirst($day) }} ({{ count($dayGames) }} games)
+                                                    </button>
+                                                </h2>
+                                                <div id="dayCollapse{{ $weekNumber }}_{{ $day }}" class="accordion-collapse collapse" 
+                                                    aria-labelledby="dayHeading{{ $weekNumber }}_{{ $day }}" 
+                                                    data-bs-parent="#dayAccordion{{ $weekNumber }}">
+                                                    <div class="accordion-body">
+                                                        
+                                                        @php
+                                                            // Group games by location
+                                                            $gamesByLocation = [];
+                                                            foreach ($dayGames as $game) {
+                                                                $locationId = $game['location_id'] ?? 0;
+                                                                $locationName = $game['location_name'] ?? 'Unknown Location';
+                                                                if (!isset($gamesByLocation[$locationId])) {
+                                                                    $gamesByLocation[$locationId] = [
+                                                                        'name' => $locationName,
+                                                                        'games' => []
+                                                                    ];
+                                                                }
+                                                                $gamesByLocation[$locationId]['games'][] = $game;
+                                                            }
+                                                            // Sort by location id
+                                                            ksort($gamesByLocation);
+                                                        @endphp
+                                                        
+                                                        <div class="accordion" id="locationAccordion{{ $weekNumber }}_{{ $day }}">
+                                                            @foreach($gamesByLocation as $locationId => $locationData)
+                                                                <div class="accordion-item">
+                                                                    <h2 class="accordion-header" id="locHeading{{ $weekNumber }}_{{ $day }}_{{ $locationId }}">
+                                                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                                            data-bs-target="#locCollapse{{ $weekNumber }}_{{ $day }}_{{ $locationId }}" 
+                                                                            aria-expanded="false" aria-controls="locCollapse{{ $weekNumber }}_{{ $day }}_{{ $locationId }}">
+                                                                            {{ $locationData['name'] }} ({{ count($locationData['games']) }} games)
+                                                                        </button>
+                                                                    </h2>
+                                                                    <div id="locCollapse{{ $weekNumber }}_{{ $day }}_{{ $locationId }}" class="accordion-collapse collapse" 
+                                                                        aria-labelledby="locHeading{{ $weekNumber }}_{{ $day }}_{{ $locationId }}" 
+                                                                        data-bs-parent="#locationAccordion{{ $weekNumber }}_{{ $day }}">
+                                                                        <div class="accordion-body">
+                                                                            <table class="table table-striped">
+                                                                                <thead>
+                                                                                    <tr>
+                                                                                        <th>Time</th>
+                                                                                        <th>Field</th>
+                                                                                        <th>Division</th>
+                                                                                        <th>Team 1</th>
+                                                                                        <th>Team 2</th>
+                                                                                        <th>Actions</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    @foreach($locationData['games'] as $game)
+                                                                                        <tr class="game-row" data-game-id="{{ $game['team1_id'] }}-{{ $game['team2_id'] }}-{{ $game['day'] }}-{{ $locationId }}">
+                                                                                            <td>{{ $game['time'] }}</td>
+                                                                                            <td>{{ $game['field'] }}</td>
+                                                                                            <td>
+                                                                                                <span class="badge bg-{{ isset($game['division']) && $game['division'] == 1 ? 'primary' : 'success' }}">
+                                                                                                    Division {{ $game['division'] ?? '?' }}
+                                                                                                </span>
+                                                                                            </td>
+                                                                                            <td>{{ $game['team1_name'] }}</td>
+                                                                                            <td>{{ $game['team2_name'] }}</td>
+                                                                                            <td>
+                                                                                                <button type="button" class="btn btn-sm btn-primary edit-game-btn"
+                                                                                                    data-team1-id="{{ $game['team1_id'] }}"
+                                                                                                    data-team2-id="{{ $game['team2_id'] }}"
+                                                                                                    data-team1-name="{{ $game['team1_name'] }}"
+                                                                                                    data-team2-name="{{ $game['team2_name'] }}"
+                                                                                                    data-day="{{ $game['day'] }}"
+                                                                                                    data-time="{{ $game['time'] }}"
+                                                                                                    data-location-id="{{ $game['location_id'] ?? 0 }}"
+                                                                                                    data-location-name="{{ $game['location_name'] ?? 'Unknown' }}"
+                                                                                                    data-field="{{ $game['field'] }}">
+                                                                                                    Edit
+                                                                                                </button>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    @endforeach
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
         
-        function updateGameDisplay(team1Id, team1Name, team2Id, team2Name, gameTime, day, field) {
-            if (!currentGameElement) return;
+        <!-- Team Statistics -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Team Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach($statistics as $team)
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ $team['name'] }}</h6>
+                                    <p class="card-text">
+                                        Division: {{ $team['division'] ?? 'N/A' }}<br>
+                                        Games: {{ $team['games'] }} / {{ $team['target_games'] }}
+                                    </p>
+                                    <div class="progress">
+                                        <div class="progress-bar {{ $team['games'] >= $team['target_games'] ? 'bg-success' : 'bg-info' }}" 
+                                            role="progressbar" style="width: {{ ($team['games'] / $team['target_games']) * 100 }}%;" 
+                                            aria-valuenow="{{ $team['games'] }}" aria-valuemin="0" aria-valuemax="{{ $team['target_games'] }}">
+                                            {{ $team['games'] }}/{{ $team['target_games'] }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+</div>
 
-            // Helper functions
-            const createOpenSlot = (time, fieldName) => {
-                const openSlot = document.createElement('div');
-                openSlot.className = 'open-slot';
-                openSlot.innerHTML = `
-                    <div class="slot-info">
-                        Open Spot • ${fieldName} • ${time}
-                    </div>
-                `;
-                return openSlot;
-            };
-
-            const findOrCreateDaySection = (dayName, weekContainer) => {
-                const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                const formattedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-                
-                // Try to find existing day section
-                let daySection = Array.from(weekContainer.querySelectorAll('.day-section')).find(section => {
-                    return section.querySelector('.day-title').textContent.trim() === formattedDay;
-                });
-
-                if (!daySection) {
-                    // Create new day section
-                    daySection = document.createElement('div');
-                    daySection.className = 'day-section';
-                    
-                    const title = document.createElement('h3');
-                    title.className = 'day-title';
-                    title.textContent = formattedDay;
-                    daySection.appendChild(title);
-
-                    // Find correct position to insert
-                    const sections = weekContainer.querySelectorAll('.day-section');
-                    const newIndex = dayOrder.indexOf(formattedDay);
-                    
-                    let inserted = false;
-                    for (const existingSection of sections) {
-                        const existingDay = existingSection.querySelector('.day-title').textContent.trim();
-                        const existingIndex = dayOrder.indexOf(existingDay);
-                        
-                        if (existingIndex > newIndex) {
-                            existingSection.parentNode.insertBefore(daySection, existingSection);
-                            inserted = true;
-                            break;
-                        }
-                    }
-                    if (!inserted) weekContainer.appendChild(daySection);
-                }
-                
-                return daySection;
-            };
-
-            const findOrCreateFieldSection = (fieldName, daySection) => {
-                let fieldSection = Array.from(daySection.querySelectorAll('.field-section')).find(section => {
-                    return section.querySelector('.field-title').textContent.trim() === fieldName;
-                });
-
-                if (!fieldSection) {
-                    fieldSection = document.createElement('div');
-                    fieldSection.className = 'field-section';
-                    
-                    const title = document.createElement('h4');
-                    title.className = 'field-title';
-                    title.textContent = fieldName;
-                    fieldSection.appendChild(title);
-
-                    // Insert in alphabetical order
-                    const existingSections = daySection.querySelectorAll('.field-section');
-                    let inserted = false;
-                    
-                    for (const section of existingSections) {
-                        if (section.querySelector('.field-title').textContent.localeCompare(fieldName) > 0) {
-                            section.parentNode.insertBefore(fieldSection, section);
-                            inserted = true;
-                            break;
-                        }
-                    }
-                    if (!inserted) daySection.appendChild(fieldSection);
-                }
-                
-                return fieldSection;
-            };
-
-            // Capture original state
-            const originalWeekContainer = currentGameElement.closest('.week-container');
-            const originalDaySection = currentGameElement.closest('.day-section');
-            const originalFieldSection = currentGameElement.closest('.field-section');
-            const originalTimeValue = originalTime;
-            const originalFieldValue = originalFieldSection ? 
-                originalFieldSection.querySelector('.field-title').textContent.trim() : '';   
-            const originalIndex = Array.from(originalFieldSection.children).indexOf(currentGameElement);
-
-
-            // Update game details
-            currentGameElement.querySelector('.team:first-child .team-id').textContent = `#${team1Id}`;
-            currentGameElement.querySelector('.team:first-child .team-name').textContent = team1Name;
-            currentGameElement.querySelector('.team:last-child .team-id').textContent = `#${team2Id}`;
-            currentGameElement.querySelector('.team:last-child .team-name').textContent = team2Name;
-            currentGameElement.querySelector('.time').textContent = gameTime;
-            currentGameElement.querySelector('.field-name').textContent = field;
-
-            // Update edit button
-            const editButton = currentGameElement.querySelector('button');
-            editButton.setAttribute('onclick', 
-                `openEditModal('${team1Id}', '${team2Id}', '${day}', '${field}', '${gameTime}')`);
-
-            // Handle day/field changes
-            const newDaySection = findOrCreateDaySection(day, originalWeekContainer);
-            const newFieldSection = findOrCreateFieldSection(field, newDaySection);
-
-            if (originalDay !== day || originalField !== field) {
-                // Move to new field section
-                newFieldSection.appendChild(currentGameElement);
-            }
-
-            // Handle time changes
-            if (originalTime !== gameTime || originalDay !== day || originalField !== field) {
-                if (originalFieldSection) {
-                    const newOpenSlot = createOpenSlot(originalTime, originalField);
-                    const allSlots = Array.from(originalFieldSection.children);
-                    
-                    // Insert the open slot at the exact same position
-                    if (originalIndex >= 0 && originalIndex < allSlots.length) {
-                        originalFieldSection.insertBefore(newOpenSlot, allSlots[originalIndex]);
-                    } else {
-                        originalFieldSection.appendChild(newOpenSlot);
-                    }
-                }
-                
-                // Remove open slot at new position and insert game
-                const newSlots = Array.from(newFieldSection.querySelectorAll('.game, .open-slot'));
-                let inserted = false;
-
-                // First try to replace an open slot with matching time
-                for (let i = 0; i < newSlots.length; i++) {
-                    const slot = newSlots[i];
-                    const slotTime = slot.classList.contains('game') ? 
-                        slot.querySelector('.time').textContent.trim() : 
-                        slot.querySelector('.slot-info').textContent.split('•')[2].trim();
-                    
-                    if (slotTime === gameTime && slot.classList.contains('open-slot')) {
-                        slot.parentNode.replaceChild(currentGameElement, slot);
-                        inserted = true;
-                        break;
-                    }
-                }
-
-                // If no open slot was replaced, insert in correct position
-                if (!inserted) {
-                    inserted = false;
-                    for (let i = 0; i < newSlots.length; i++) {
-                        const slot = newSlots[i];
-                        const slotTime = slot.classList.contains('game') ? 
-                            slot.querySelector('.time').textContent.trim() : 
-                            slot.querySelector('.slot-info').textContent.split('•')[2].trim();
-                        
-                        // If we find a slot with the same time, keep looking until we find
-                        // either a later time or the end of slots with this time
-                        if (slotTime === gameTime) {
-                            continue;
-                        }
-                        
-                        if (slotTime.localeCompare(gameTime) > 0) {
-                            slot.parentNode.insertBefore(currentGameElement, slot);
-                            inserted = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!inserted) {
-                        newFieldSection.appendChild(currentGameElement);
-                    }
-                }
-            }
-
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.style.position = 'fixed';
-            notification.style.top = '20px';
-            notification.style.right = '20px';
-            notification.style.padding = '10px 20px';
-            notification.style.borderRadius = '4px';
-            notification.style.zIndex = '1000';
-            notification.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
-            notification.style.color = 'white';
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 4000);
-        }
-
-        // Event Listeners
-        document.getElementById('modalTeam1').addEventListener('change', function() {
-            const team2Select = document.getElementById('modalTeam2');
-            const selectedTeam = this.value;
-            
-            Array.from(team2Select.options).forEach(option => {
-                option.disabled = option.value === selectedTeam;
-            });
-        });
-
-        // NEW LISTENER
-        document.getElementById('modalGameDay').addEventListener('change', function() {
-            populateFieldDropdown();
-        });
-
-        document.getElementById('modalTeam2').addEventListener('change', function() {
-            const team1Select = document.getElementById('modalTeam1');
-            const selectedTeam = this.value;
-            
-            Array.from(team1Select.options).forEach(option => {
-                option.disabled = option.value === selectedTeam;
-            });
-        });
-
-        document.getElementById('editGameModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeEditModal();
-            }
-        });
-
-        document.getElementById('editGameForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const team1Id = formData.get('team1_id');
-            const team2Id = formData.get('team2_id');
-            const gameTime = formData.get('time');
-            const day = formData.get('day');
-            const field = formData.get('field');
-            
-            const token = document.querySelector('input[name="_token"]').value;
-
-            //console.log(field);
-            //console.log(originalField);
-            
-            fetch('/edit-game', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    team1_id: team1Id,
-                    team2_id: team2Id,
-                    time: gameTime,
-                    day: day,
-                    field: field,
-                    original_team1_id: originalTeam1Id,
-                    original_team2_id: originalTeam2Id,
-                    original_day: originalDay,
-                    original_field: originalField,
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    updateGameDisplay(
-                        team1Id,
-                        data.data.team1_name,
-                        team2Id,
-                        data.data.team2_name,
-                        gameTime,
-                        day,
-                        field,
-                    );
-                    closeEditModal();
-                    showNotification('Game updated successfully!', 'success');
-                } else {
-                    showNotification(data.message || 'Failed to update game.', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                //showNotification('An error occurred while updating the game', 'error');
-                showNotification(error, 'error'); //Error is TypeError: Cannot read properties of null (reading 'charAt')
-            });
-        });
-
-
-    // New version of handling day/time picker
-    document.addEventListener('DOMContentLoaded', function() {
-        const dayCircles = document.querySelectorAll('.day-circle');
-        
-        dayCircles.forEach(circle => {
-            circle.addEventListener('click', function() {
-                const day = this.dataset.day;
-                const checkbox = this.querySelector('input[type="checkbox"]');
-                const timeInputs = document.getElementById(`time-${day}`);
-                
-                this.classList.toggle('selected');
-                checkbox.checked = !checkbox.checked;
-                
-                if (timeInputs) {
-                    timeInputs.style.display = checkbox.checked ? '' : 'none';
-                    const inputs = timeInputs.querySelectorAll('input[type="time"]');
-                    inputs.forEach(input => {
-                        input.required = checkbox.checked;
-                    });
-                }
-            });
-        });
-    });
-
-
-    // ------- New menu javascript ------- //
-    // JavaScript to handle the adding of new game slots
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle checkbox toggle for days
-        document.querySelectorAll('.day-checkbox').forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
-                const day = this.id.replace('_enabled', '');
-                const details = document.getElementById(day + '_details');
-                if (this.checked) {
-                    details.style.display = 'block';
-                } else {
-                    details.style.display = 'none';
-                }
-            });
-        });
-        
-        // Handle add slot button clicks
-        document.querySelectorAll('.add-slot-btn').forEach(function(button) {
-            button.addEventListener('click', function() {
-                const day = this.getAttribute('data-day');
-                const container = document.getElementById(day + '_slots_container');
-                const slotCount = container.querySelectorAll('.game-slot').length;
-                const newSlotIndex = slotCount + 1;
-                
-                // Create new game slot with unique IDs
-                const newSlot = document.createElement('div');
-                newSlot.className = 'game-slot';
-                newSlot.innerHTML = `
-                    <div class="slot-header">
-                        <span>Game Slot ${newSlotIndex}</span>
-                        <button type="button" class="remove-slot-btn"><i class="fas fa-times"></i></button>
-                    </div>
-                    
-                    <div class="game-slot-row">
-                    <!-- Location dropdown with improved styling -->
-                    <div class="form-group slot-field location-field">
-                        <label for="${day}_location_${newSlotIndex}">Location:</label>
-                        <select id="${day}_location_${newSlotIndex}" name="${day}_location_${newSlotIndex}" class="select-control">
-                            ${generateLocationOptions()}
+<!-- Edit Game Modal -->
+<div class="modal fade" id="editGameModal" tabindex="-1" aria-labelledby="editGameModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editGameModalLabel">Edit Game</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editGameForm">
+                @csrf
+                <div class="modal-body">
+                    <!-- Team 1 Selection -->
+                    <div class="mb-3">
+                        <label for="team1_id" class="form-label">Team 1</label>
+                        <select class="form-select" id="team1_id" name="team1_id" required>
+                            @foreach(\App\Models\Team::all() as $team)
+                                <option value="{{ $team[0] }}">{{ $team[1] }}</option>
+                            @endforeach
                         </select>
                     </div>
                     
-                    <!-- Game time section with improved spacing -->
-                    <div class="form-group slot-field time-field">
-                        <label for="${day}_start_${newSlotIndex}">Start Time:</label>
-                        <input type="time" id="${day}_start_${newSlotIndex}" name="${day}_start_${newSlotIndex}" value="09:00" required class="time-input">
-                    </div>
-                    <div class="form-group slot-field time-field">
-                        <label for="${day}_end_${newSlotIndex}">End Time:</label>
-                        <input type="time" id="${day}_end_${newSlotIndex}" name="${day}_end_${newSlotIndex}" value="17:00" required class="time-input">
-                    </div>
-                    
-                    <!-- Fields section (simplified) -->
-                    <div class="form-group slot-field fields-field">
-                        <label for="${day}_fields_${newSlotIndex}">Number of Fields:</label>
-                        <input type="number" id="${day}_fields_${newSlotIndex}" name="${day}_fields_${newSlotIndex}" min="1" value="1" class="number-input">
-                    </div>
-                    
-                    <!-- Hidden field name input (removed from UI but kept for backend compatibility) -->
-                    <input type="hidden" id="${day}_field_name_${newSlotIndex}" name="${day}_field_name_${newSlotIndex}" value="Field">
-                    
-                    <!-- Division dropdown with improved styling -->
-                    <div class="form-group slot-field division-field">
-                        <label for="${day}_division_${newSlotIndex}">Division:</label>
-                        <select id="${day}_division_${newSlotIndex}" name="${day}_division_${newSlotIndex}" class="select-control">
-                            <option value="">None</option>
-                            <option value="1">Division 1</option>
-                            <option value="2">Division 2</option>
+                    <!-- Team 2 Selection -->
+                    <div class="mb-3">
+                        <label for="team2_id" class="form-label">Team 2</label>
+                        <select class="form-select" id="team2_id" name="team2_id" required>
+                            @foreach(\App\Models\Team::all() as $team)
+                                <option value="{{ $team[0] }}">{{ $team[1] }}</option>
+                            @endforeach
                         </select>
                     </div>
+                    
+                    <!-- Day Selection -->
+                    <div class="mb-3">
+                        <label for="day" class="form-label">Day</label>
+                        <select class="form-select" id="day" name="day" required>
+                            <option value="monday">Monday</option>
+                            <option value="tuesday">Tuesday</option>
+                            <option value="wednesday">Wednesday</option>
+                            <option value="thursday">Thursday</option>
+                            <option value="friday">Friday</option>
+                            <option value="saturday">Saturday</option>
+                            <option value="sunday">Sunday</option>
+                        </select>
                     </div>
-                `;
-                
-                container.appendChild(newSlot);
-                
-                // Add event listener to remove button
-                newSlot.querySelector('.remove-slot-btn').addEventListener('click', function() {
-                    container.removeChild(newSlot);
-                    // Update slot numbers for remaining slots
-                    updateSlotNumbers(container);
-                });
-            });
-        });
-        
-        // Helper function to generate location options
-        function generateLocationOptions() {
-            // This should match the locations from your Location model
-            const locations = [
-                [1, 'Lachine'],
-                [2, 'VSL'],
-                [3, 'CSL'],
-                [4, 'Brossard'],
-                [5, 'ST-Leonard']
-            ];
-            
-            return locations.map(location => 
-                `<option value="${location[0]}">${location[1]}</option>`
-            ).join('');
-        }
-        
-        // Helper function to update slot numbers
-        function updateSlotNumbers(container) {
-            const slots = container.querySelectorAll('.game-slot');
-            slots.forEach((slot, index) => {
-                const slotHeader = slot.querySelector('.slot-header span');
-                if (slotHeader) {
-                    slotHeader.textContent = `Game Slot ${index + 1}`;
-                }
-            });
-        }
-    });
+                    
+                    <!-- Location Selection -->
+                    <div class="mb-3">
+                        <label for="location_id" class="form-label">Location</label>
+                        <select class="form-select" id="location_id" name="location_id" required>
+                            @foreach(\App\Models\Location::all() as $location)
+                                <option value="{{ $location[0] }}">{{ $location[1] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <!-- Time Input -->
+                    <div class="mb-3">
+                        <label for="time" class="form-label">Time</label>
+                        <input type="time" class="form-control" id="time" name="time" required>
+                    </div>
+                    
+                    <!-- Field Input -->
+                    <div class="mb-3">
+                        <label for="field" class="form-label">Field</label>
+                        <input type="text" class="form-control" id="field" name="field" required>
+                    </div>
+                    
+                    <!-- Hidden fields for original values -->
+                    <input type="hidden" id="original_team1_id" name="original_team1_id">
+                    <input type="hidden" id="original_team2_id" name="original_team2_id">
+                    <input type="hidden" id="original_day" name="original_day">
+                    <input type="hidden" id="original_location_id" name="original_location_id">
+                    <input type="hidden" id="original_field" name="original_field">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-    </script>
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle location details based on checkbox state
+    document.querySelectorAll('.location-toggle').forEach(function(toggle) {
+        const locationId = toggle.id;
+        const detailsDiv = document.querySelector('#' + locationId.replace('_enabled', '_details'));
+        
+        // Set initial state
+        if (detailsDiv) {
+            detailsDiv.style.display = toggle.checked ? 'block' : 'none';
+        }
+        
+        // Add change event
+        toggle.addEventListener('change', function() {
+            if (detailsDiv) {
+                detailsDiv.style.display = this.checked ? 'block' : 'none';
+            }
+        });
+    });
+    
+    // Edit Game Modal
+    const editBtns = document.querySelectorAll('.edit-game-btn');
+    const editModal = new bootstrap.Modal(document.getElementById('editGameModal'));
+    
+    editBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Set form values from data attributes
+            document.getElementById('team1_id').value = this.dataset.team1Id;
+            document.getElementById('team2_id').value = this.dataset.team2Id;
+            document.getElementById('day').value = this.dataset.day;
+            document.getElementById('time').value = this.dataset.time;
+            document.getElementById('location_id').value = this.dataset.locationId;
+            document.getElementById('field').value = this.dataset.field;
+            
+            // Set original values for reference
+            document.getElementById('original_team1_id').value = this.dataset.team1Id;
+            document.getElementById('original_team2_id').value = this.dataset.team2Id;
+            document.getElementById('original_day').value = this.dataset.day;
+            document.getElementById('original_location_id').value = this.dataset.locationId;
+            document.getElementById('original_field').value = this.dataset.field;
+            
+            // Show modal
+            editModal.show();
+        });
+    });
+    
+    // Edit Game Form Submit
+    document.getElementById('editGameForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const gameRow = document.querySelector(`.game-row[data-game-id="${formData.get('original_team1_id')}-${formData.get('original_team2_id')}-${formData.get('original_day')}-${formData.get('original_location_id')}"]`);
+        
+        fetch('/edit-game', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                editModal.hide();
+                
+                // Update row in the table
+                const cells = gameRow.querySelectorAll('td');
+                cells[0].textContent = data.data.time;
+                cells[1].textContent = data.data.field;
+                cells[3].textContent = data.data.team1_name;
+                cells[4].textContent = data.data.team2_name;
+                
+                // Update data attributes for future edits
+                const editBtn = gameRow.querySelector('.edit-game-btn');
+                editBtn.dataset.team1Id = formData.get('team1_id');
+                editBtn.dataset.team2Id = formData.get('team2_id');
+                editBtn.dataset.team1Name = data.data.team1_name;
+                editBtn.dataset.team2Name = data.data.team2_name;
+                editBtn.dataset.day = formData.get('day');
+                editBtn.dataset.time = formData.get('time');
+                editBtn.dataset.locationId = formData.get('location_id');
+                editBtn.dataset.locationName = data.data.location_name;
+                editBtn.dataset.field = formData.get('field');
+                
+                // Update game-row data-id
+                gameRow.dataset.gameId = `${formData.get('team1_id')}-${formData.get('team2_id')}-${formData.get('day')}-${formData.get('location_id')}`;
+                
+                // Show success message
+                alert('Game updated successfully!');
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the game.');
+        });
+    });
+});
+</script>
 </body>
 </html>

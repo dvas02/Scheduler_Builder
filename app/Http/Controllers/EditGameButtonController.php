@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Team;
+use App\Models\Location;
 use Illuminate\Http\Request;
 
 class EditGameButtonController extends Controller
 {
     public function editGameHandler(Request $request)
     {
-
-
         // Validate the request
         $request->validate([
             // New values
@@ -18,13 +17,15 @@ class EditGameButtonController extends Controller
             'team2_id' => 'required|integer|different:team1_id',
             'time' => 'required|date_format:H:i',
             'day' => 'required',
-            'field' => 'required',  // Add field validation
+            'location_id' => 'required|integer',
+            'field' => 'required',
 
             // Original values
             'original_team1_id' => 'required|integer',
             'original_team2_id' => 'required|integer',
             'original_day' => 'required',
-            'original_field' => 'required',  // Add original field validation
+            'original_location_id' => 'required|integer',
+            'original_field' => 'required',
         ]);
 
         try {
@@ -38,7 +39,7 @@ class EditGameButtonController extends Controller
                 ], 404);
             }
 
-            // Get team names from the static array
+            // Get team names from the teams array
             $teams = collect(Team::all());
             $team1 = $teams->first(function($team) use ($request) {
                 return $team[0] == $request->team1_id;
@@ -54,28 +55,47 @@ class EditGameButtonController extends Controller
                 ], 404);
             }
 
+            // Get location name from the locations array
+            $locations = collect(Location::all());
+            $location = $locations->first(function($loc) use ($request) {
+                return $loc[0] == $request->location_id;
+            });
+
+            if (!$location) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Location not found'
+                ], 404);
+            }
+
             // Find and update the game in the schedule
             $updated = false;
             foreach ($schedule as $weekNumber => $games) {
                 foreach ($games as $index => $game) {
-                    // Check for match with original teams (in either order)
+                    // Check for match with original teams and location
                     if (($game['team1_id'] == $request->original_team1_id && 
-                         $game['team2_id'] == $request->original_team2_id) ||
-                        ($game['team1_id'] == $request->original_team2_id && 
-                         $game['team2_id'] == $request->original_team1_id) ||
-                         $game['day'] == $request->original_day //&&
-                         //$game['field'] == $request->original_field  // Add field check
-                         ) {
+                         $game['team2_id'] == $request->original_team2_id ||
+                         $game['team1_id'] == $request->original_team2_id && 
+                         $game['team2_id'] == $request->original_team1_id) && 
+                        $game['day'] == $request->original_day &&
+                        $game['location_id'] == $request->original_location_id &&
+                        $game['field'] == $request->original_field) {
+                        
+                        // Determine division - use existing if available, otherwise use team1's division
+                        $division = $game['division'] ?? $team1[2] ?? 0;
                         
                         // Update game details
                         $schedule[$weekNumber][$index] = [
                             'team1_id' => $request->team1_id,
                             'team2_id' => $request->team2_id,
-                            'team1_name' => $team1[1],  // Index 1 contains the team name
-                            'team2_name' => $team2[1],  // Index 1 contains the team name
+                            'team1_name' => $team1[1],
+                            'team2_name' => $team2[1],
                             'time' => $request->time,
                             'day' => $request->day,
-                            //'field' => $request->field,  // Add field
+                            'location_id' => $request->location_id,
+                            'location_name' => $location[1],
+                            'field' => $request->field,
+                            'division' => $division
                         ];
                         
                         $updated = true;
@@ -102,7 +122,9 @@ class EditGameButtonController extends Controller
                     'team1_name' => $team1[1],
                     'team2_name' => $team2[1],
                     'time' => $request->time,
-                    //'field' => $request->field,
+                    'location_name' => $location[1],
+                    'field' => $request->field,
+                    'division' => $team1[2] ?? 0
                 ]
             ]);
 
