@@ -18,4 +18,14 @@ class Location
     {
         return self::$locations;
     }
+    
+    // Add a method to get divisions
+    public static function divisions()
+    {
+        return [
+            0 => 'None',
+            1 => 'Division 1',
+            2 => 'Division 2'
+        ];
+    }
 }

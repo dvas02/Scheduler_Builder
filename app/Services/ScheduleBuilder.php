@@ -51,7 +51,7 @@ class ScheduleBuilder
                                 'start' => $locationInfo['start'] ?? $dayInfo['start'],
                                 'end' => $locationInfo['end'] ?? $dayInfo['end'],
                                 'num_fields' => $locationInfo['num_fields'] ?? 1,
-                                'field_name' => $locationInfo['field_name'] ?? 'Field',
+                                'division' => $locationInfo['division'] ?? 0,
                                 'games_per_location' => $this->calculateGamesPerDay(
                                     $locationInfo['start'] ?? $dayInfo['start'],
                                     $locationInfo['end'] ?? $dayInfo['end'],
@@ -142,6 +142,7 @@ class ScheduleBuilder
                 // Schedule games for each location on this day
                 foreach ($dayInfo['locations'] as $locationId => $locationInfo) {
                     $gamesThisLocation = 0;
+                    $locationDivision = $locationInfo['division'] ?? 0; // Get division for this location
                     
                     while ($gamesThisLocation < $locationInfo['games_per_location'] && !empty($availableMatchups)) {
                         $matchupFound = false;
@@ -151,7 +152,7 @@ class ScheduleBuilder
                             $team2Index = $matchup[1];
                             $team1 = $this->teams[$team1Index];
                             $team2 = $this->teams[$team2Index];
-                            $division = $matchup[2]; // The division this matchup belongs to
+                            $matchupDivision = $matchup[2]; // The division this matchup belongs to
 
                             // Skip if either team has reached target games
                             if ($gamesScheduled[$team1Index] >= $this->targetGamesPerTeam ||
@@ -171,6 +172,11 @@ class ScheduleBuilder
                             if (strpos($team1[1], "BYE") !== false || strpos($team2[1], "BYE") !== false) {
                                 unset($availableMatchups[$matchupIndex]);
                                 unset($matchups[$matchupIndex]);
+                                continue;
+                            }
+                            
+                            // Skip if location has a specific division requirement and this matchup doesn't match
+                            if ($locationDivision > 0 && $matchupDivision != $locationDivision) {
                                 continue;
                             }
 
@@ -195,8 +201,8 @@ class ScheduleBuilder
                                 'time' => $gameTime,
                                 'location_id' => $locationId,
                                 'location_name' => $locationName,
-                                'field' => $locationInfo['field_name'] . ' ' . $fieldNumber,
-                                'division' => $division
+                                'field' => "Field " . $fieldNumber,
+                                'division' => $matchupDivision
                             ];
 
                             // Update tracking variables

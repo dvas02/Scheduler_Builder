@@ -81,8 +81,9 @@ class EditGameButtonController extends Controller
                         $game['location_id'] == $request->original_location_id &&
                         $game['field'] == $request->original_field) {
                         
-                        // Determine division - use existing if available, otherwise use team1's division
-                        $division = $game['division'] ?? $team1[2] ?? 0;
+                        // Determine division based on teams
+                        // Use team1's division if they're in the same division, otherwise use 0 (cross-division)
+                        $division = ($team1[2] == $team2[2]) ? $team1[2] : 0;
                         
                         // Update game details
                         $schedule[$weekNumber][$index] = [
@@ -124,7 +125,7 @@ class EditGameButtonController extends Controller
                     'time' => $request->time,
                     'location_name' => $location[1],
                     'field' => $request->field,
-                    'division' => $team1[2] ?? 0
+                    'division' => $division
                 ]
             ]);
 

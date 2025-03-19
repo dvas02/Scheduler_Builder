@@ -77,6 +77,7 @@
                                     <div id="collapse{{ $day }}" class="accordion-collapse collapse" 
                                         aria-labelledby="heading{{ $day }}" data-bs-parent="#daysAccordion">
                                         <div class="accordion-body">
+                                            <!-- 
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
                                                     <label for="{{ $day }}_start" class="form-label">Start Time</label>
@@ -89,6 +90,7 @@
                                                         name="{{ $day }}_end" value="{{ $params[$day.'_end'] ?? '22:00' }}">
                                                 </div>
                                             </div>
+                                        -->
                                             
                                             <!-- Locations for this day -->
                                             <div class="card">

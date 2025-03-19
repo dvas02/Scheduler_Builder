@@ -12,7 +12,8 @@ class ScheduleController extends Controller
     public function index()
     {
         return view('scheduler-page', [
-            'locations' => Location::all()
+            'locations' => Location::all(),
+            'divisions' => Location::divisions()
         ]);
     }
 
@@ -40,7 +41,7 @@ class ScheduleController extends Controller
                 $validationRules[$day.'_loc_'.$locationId.'_start'] = 'nullable|date_format:H:i';
                 $validationRules[$day.'_loc_'.$locationId.'_end'] = 'nullable|date_format:H:i';
                 $validationRules[$day.'_loc_'.$locationId.'_fields'] = 'nullable|integer|min:1';
-                $validationRules[$day.'_loc_'.$locationId.'_field_name'] = 'nullable|string';
+                $validationRules[$day.'_loc_'.$locationId.'_division'] = 'nullable|integer|min:0|max:2';
             }
         }
 
@@ -83,7 +84,7 @@ class ScheduleController extends Controller
                         $locationStart = $request->input($day.'_loc_'.$locationId.'_start') ?? $validated[$day.'_start'];
                         $locationEnd = $request->input($day.'_loc_'.$locationId.'_end') ?? $validated[$day.'_end'];
                         $locationFields = $request->input($day.'_loc_'.$locationId.'_fields') ?? 1;
-                        $locationFieldName = $request->input($day.'_loc_'.$locationId.'_field_name') ?? 'Field';
+                        $locationDivision = $request->input($day.'_loc_'.$locationId.'_division', 0);
                         
                         $dayLocations[$locationId] = [
                             'enabled' => true,
@@ -91,7 +92,7 @@ class ScheduleController extends Controller
                             'start' => $locationStart,
                             'end' => $locationEnd,
                             'num_fields' => $locationFields,
-                            'field_name' => $locationFieldName,
+                            'division' => $locationDivision,
                         ];
                         
                         // Store in params for view
@@ -99,7 +100,7 @@ class ScheduleController extends Controller
                         $params[$day.'_loc_'.$locationId.'_start'] = $locationStart;
                         $params[$day.'_loc_'.$locationId.'_end'] = $locationEnd;
                         $params[$day.'_loc_'.$locationId.'_fields'] = $locationFields;
-                        $params[$day.'_loc_'.$locationId.'_field_name'] = $locationFieldName;
+                        $params[$day.'_loc_'.$locationId.'_division'] = $locationDivision;
                     }
                 }
                 
@@ -135,7 +136,8 @@ class ScheduleController extends Controller
             'statistics' => $result['statistics'],
             'totalGameSlots' => $result['totalGameSlots'],
             'params' => $params,
-            'locations' => $locations
+            'locations' => $locations,
+            'divisions' => Location::divisions()
         ]);
     }
 }
